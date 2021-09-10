@@ -26,7 +26,6 @@ type LogMapping struct {
 	SkippedValues      []string                    `json:"skippedValues"`
 	Fields             []LogMappingField           `json:"fields"`
 	StructuredInputs   []LogMappingStructuredInput `json:"structuredInputs"`
-	Input              LogMappingInput             `json:"input"`
 }
 
 type LogMappingField struct {
@@ -45,14 +44,6 @@ type LogMappingField struct {
 	TimeZone         string `json:"timeZone"`
 	Value            string `json:"value"`
 	ValueType        string `json:"valueType"`
-}
-
-type LogMappingInput struct {
-	Alternatives   []string `json:"alternatives"`
-	EventIdPattern string   `json:"event_id_pattern"`
-	LogFormat      string   `json:"log_format"`
-	Product        string   `json:"product"`
-	Vendor         string   `json:"vendor"`
 }
 
 type LogMappingStructuredInput struct {
@@ -78,7 +69,6 @@ type PostLogMappingPayload struct {
 	SkippedValues      []string                    `json:"skippedValues"`
 	Fields             []LogMappingField           `json:"fields"`
 	StructuredInputs   []LogMappingStructuredInput `json:"structuredInputs"`
-	Input              LogMappingInput             `json:"input"`
 }
 
 func resourceLogMapping() *schema.Resource {
@@ -123,35 +113,6 @@ func resourceLogMapping() *schema.Resource {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
-			},
-			"input": &schema.Schema{
-				Type:     schema.TypeList,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"alternatives": &schema.Schema{
-							Type:     schema.TypeList,
-							Optional: true,
-							Elem:     &schema.Schema{Type: schema.TypeString},
-						},
-						"event_id_pattern": &schema.Schema{
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"log_format": &schema.Schema{
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"product": &schema.Schema{
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"vendor": &schema.Schema{
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-					},
-				},
 			},
 			"structured_input": &schema.Schema{
 				Type:     schema.TypeList,
@@ -214,8 +175,7 @@ func hasConfigChanges(d resourceDiffer) bool {
 		d.HasChange("source") ||
 		d.HasChange("unstructured_field") ||
 		d.HasChange("skipped_values") ||
-		d.HasChange("structured_input") ||
-		d.HasChange("input")
+		d.HasChange("structured_input")
 }
 
 func resourceLogMappingCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -232,7 +192,6 @@ func resourceLogMappingCreate(ctx context.Context, d *schema.ResourceData, m int
 			RelatesEntities:  d.Get("relates_entities").(bool),
 			Source:           d.Get("source").(string),
 			SkippedValues:    d.Get("skipped_values").([]string),
-			Input:            d.Get("input").(LogMappingInput),
 			StructuredInputs: d.Get("structured_input").([]LogMappingStructuredInput),
 			Fields:           d.Get("field").([]LogMappingField),
 		},
@@ -292,15 +251,6 @@ func resourceLogMappingRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	input, err := flattenData(lmD.(LogMappingResponse).LogMapping.Input)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	err = d.Set("input", input)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	structuredInputs, err := flattenData(lmD.(LogMappingResponse).LogMapping.StructuredInputs)
 	if err != nil {
 		return diag.FromErr(err)
@@ -335,7 +285,6 @@ func resourceLogMappingUpdate(ctx context.Context, d *schema.ResourceData, m int
 				RelatesEntities:  d.Get("relates_entities").(bool),
 				Source:           d.Get("source").(string),
 				SkippedValues:    d.Get("skipped_values").([]string),
-				Input:            d.Get("input").(LogMappingInput),
 				StructuredInputs: d.Get("structured_input").([]LogMappingStructuredInput),
 				Fields:           d.Get("field").([]LogMappingField),
 			},
