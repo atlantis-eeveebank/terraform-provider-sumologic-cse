@@ -18,10 +18,10 @@ type NetworkBlock struct {
 }
 
 type NetworkBlockRequest struct {
-	Fields PostNetworkPayload `json:"fields"`
+	Fields PostNetworkBlockPayload `json:"fields"`
 }
 
-type PostNetworkPayload struct {
+type PostNetworkBlockPayload struct {
 	AddressBlock      string `json:"addressBlock"`
 	Internal          bool   `json:"internal"`
 	Label             string `json:"label"`
@@ -68,7 +68,7 @@ func resourceNetworkBlockCreate(ctx context.Context, d *schema.ResourceData, m i
 	c := m.(*Client)
 
 	id, err := c.Create(NetworkBlockRequest{
-		Fields: PostNetworkPayload{
+		Fields: PostNetworkBlockPayload{
 			AddressBlock:      d.Get("address_block").(string),
 			Internal:          d.Get("internal").(bool),
 			Label:             d.Get("label").(string),
@@ -118,7 +118,7 @@ func resourceNetworkBlockUpdate(ctx context.Context, d *schema.ResourceData, m i
 		c := m.(*Client)
 
 		err := c.Update(d.Id(), NetworkBlockRequest{
-			Fields: PostNetworkPayload{
+			Fields: PostNetworkBlockPayload{
 				AddressBlock:      d.Get("address_block").(string),
 				Internal:          d.Get("internal").(bool),
 				Label:             d.Get("label").(string),

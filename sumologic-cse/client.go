@@ -165,6 +165,7 @@ func (c *Client) Create(data interface{}) (string, error) {
 
 func (c *Client) Read(objectType string, id string) (interface{}, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/%s/%s", c.HostURL, objectType, id), nil)
+
 	if err != nil {
 		return "", err
 	}
@@ -177,6 +178,13 @@ func (c *Client) Read(objectType string, id string) (interface{}, error) {
 	switch objectType {
 	case "custom-entity-types":
 		var data CustomEntityTypeResponse
+		err = json.Unmarshal(body, &data)
+		if err != nil {
+			return data, err
+		}
+		return data, nil
+	case "log-mappings":
+		var data LogMappingResponse
 		err = json.Unmarshal(body, &data)
 		if err != nil {
 			return data, err
@@ -219,6 +227,12 @@ func (c *Client) Update(id string, data interface{}) error {
 		if err != nil {
 			return err
 		}
+	case LogMappingRequest:
+		objectType = "log-mappings"
+		payload, err = json.Marshal(data.(LogMappingRequest))
+		if err != nil {
+			return err
+		}
 	case NetworkBlockRequest:
 		objectType = "network-blocks"
 		payload, err = json.Marshal(data.(NetworkBlockRequest))
@@ -255,6 +269,13 @@ func (c *Client) Update(id string, data interface{}) error {
 		return nil
 	case CustomInsightRequest:
 		var data CustomInsightRequest
+		err = json.Unmarshal(body, &data)
+		if err != nil {
+			return err
+		}
+		return nil
+	case LogMappingRequest:
+		var data LogMappingResponse
 		err = json.Unmarshal(body, &data)
 		if err != nil {
 			return err
