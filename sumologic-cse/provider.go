@@ -29,6 +29,7 @@ func Provider() *schema.Provider {
 			"sumologiccse_role":               resourceRole(),
 			"sumologiccse_custom_entity_type": resourceCustomEntityType(),
 			"sumologiccse_custom_insight":     resourceCustomInsight(),
+			"sumologiccse_log_mapping":        resourceLogMapping(),
 			"sumologiccse_network_block":      resourceNetworkBlock(),
 		},
 	}
