@@ -10,48 +10,54 @@ func flattenData(data interface{}) ([]map[string]interface{}, error) {
 	switch d := data.(type) {
 	case []LogMappingField:
 		for _, f := range d {
-			field := make(map[string]interface{})
-			field["name"] = f.Name
-			field["value"] = f.Value
-			field["format"] = f.Format
-			field["value_type"] = f.ValueType
+			var field = map[string]interface{}{
+				"name":       f.Name,
+				"value":      f.Value,
+				"format":     f.Format,
+				"value_type": f.ValueType,
+			}
+
 			flattenData = append(flattenData, field)
 		}
 	case LogMappingInput:
-		input := make(map[string]interface{})
-		input["event_id_pattern"] = d.EventIdPattern
-		input["log_format"] = d.LogFormat
-		input["product"] = d.Product
-		input["vendor"] = d.Vendor
-		input["alternatives"] = d.Alternatives
+		var input = map[string]interface{}{
+			"event_id_pattern": d.EventIdPattern,
+			"log_format":       d.LogFormat,
+			"product":          d.Product,
+			"vendor":           d.Vendor,
+			"alternatives":     d.Alternatives,
+		}
 		flattenData = append(flattenData, input)
 	case []LogMappingStructuredInput:
 		for _, i := range d {
-			input := make(map[string]interface{})
-			input["event_id_pattern"] = i.EventIdPattern
-			input["log_format"] = i.LogFormat
-			input["product"] = i.Product
-			input["vendor"] = i.Vendor
+			var input = map[string]interface{}{
+				"event_id_pattern": i.EventIdPattern,
+				"log_format":       i.LogFormat,
+				"product":          i.Product,
+				"vendor":           i.Vendor,
+			}
 			flattenData = append(flattenData, input)
 		}
 	case []Permission:
 		for _, p := range d {
-			permission := make(map[string]interface{})
-			permission["id"] = p.Id
-			permission["name"] = p.Name
+			var permission = map[string]interface{}{
+				"id":   p.Id,
+				"name": p.Name,
+			}
 			flattenData = append(flattenData, permission)
 		}
 	case []User:
 		for _, u := range d {
-			user := make(map[string]interface{})
-			user["display_name"] = u.DisplayName
-			user["email"] = u.Email
-			user["mfa_enabled"] = u.MfaEnabled
-			user["permissions"] = u.Permissions
-			user["role"] = u.Role
-			user["teams"] = u.Teams
-			user["username"] = u.Username
-			user["id"] = u.Id
+			var user = map[string]interface{}{
+				"display_name": u.DisplayName,
+				"email":        u.Email,
+				"mfa_enabled":  u.MfaEnabled,
+				"permissions":  u.Permissions,
+				"role":         u.Role,
+				"teams":        u.Teams,
+				"username":     u.Username,
+				"id":           u.Id,
+			}
 			flattenData = append(flattenData, user)
 		}
 	default:

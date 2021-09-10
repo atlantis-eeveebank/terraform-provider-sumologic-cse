@@ -202,7 +202,7 @@ func resourceCustomInsightRead(ctx context.Context, d *schema.ResourceData, m in
 }
 
 func resourceCustomInsightUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	if d.HasChanges("address_block", "internal", "label", "suppresses_signals") {
+	if d.HasChanges("ordered", "description", "enabled", "name", "severity", "rule_ids", "tags") {
 		c := m.(*Client)
 
 		setRuleIds := d.Get("rule_ids").([]interface{})
