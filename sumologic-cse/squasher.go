@@ -19,15 +19,6 @@ func flattenData(data interface{}) ([]map[string]interface{}, error) {
 
 			flattenData = append(flattenData, field)
 		}
-	case LogMappingInput:
-		var input = map[string]interface{}{
-			"event_id_pattern": d.EventIdPattern,
-			"log_format":       d.LogFormat,
-			"product":          d.Product,
-			"vendor":           d.Vendor,
-			"alternatives":     d.Alternatives,
-		}
-		flattenData = append(flattenData, input)
 	case []LogMappingStructuredInput:
 		for _, i := range d {
 			var input = map[string]interface{}{
