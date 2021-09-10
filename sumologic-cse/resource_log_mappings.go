@@ -179,7 +179,7 @@ func resourceLogMapping() *schema.Resource {
 						},
 						"lookup": &schema.Schema{
 							Type:     schema.TypeList,
-							Required: true,
+							Optional: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"key": &schema.Schema{
