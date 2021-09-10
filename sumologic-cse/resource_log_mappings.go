@@ -31,7 +31,7 @@ type LogMapping struct {
 type LogMappingField struct {
 	AlternateValues  []string                `json:"alternateValues"`
 	CaseInsensitive  bool                    `json:"caseInsensitive"`
-	DefaultValue     bool                    `json:"defaultValue"`
+	DefaultValue     string                  `json:"defaultValue"`
 	FieldJoin        string                  `json:"fieldJoin"`
 	Format           string                  `json:"format"`
 	FormatParameters string                  `json:"formatParameters"`
@@ -163,6 +163,35 @@ func resourceLogMapping() *schema.Resource {
 						"value_type": &schema.Schema{
 							Type:     schema.TypeString,
 							Optional: true,
+						},
+						"alternate_values": &schema.Schema{
+							Type:     schema.TypeList,
+							Optional: true,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+						},
+						"case_insensitive": &schema.Schema{
+							Type:     schema.TypeBool,
+							Optional: true,
+						},
+						"default_value": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"lookup": &schema.Schema{
+							Type:     schema.TypeList,
+							Required: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"key": &schema.Schema{
+										Type:     schema.TypeString,
+										Optional: true,
+									},
+									"value": &schema.Schema{
+										Type:     schema.TypeString,
+										Optional: true,
+									},
+								},
+							},
 						},
 					},
 				},
