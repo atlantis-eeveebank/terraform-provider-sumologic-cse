@@ -29,21 +29,26 @@ type LogMapping struct {
 }
 
 type LogMappingField struct {
-	AlternateValues  string `json:"alternateValues"`
-	CaseInsensitive  string `json:"caseInsensitive"`
-	DefaultValue     string `json:"defaultValue"`
-	FieldJoin        string `json:"fieldJoin"`
-	Format           string `json:"format"`
-	FormatParameters string `json:"formatParameters"`
-	JoinDelimiter    string `json:"joinDelimiter"`
-	Lookup           string `json:"lookup"`
-	Name             string `json:"name"`
-	SkippedValues    string `json:"skippedValues"`
-	SplitDelimiter   string `json:"splitDelimiter"`
-	SplitIndex       string `json:"splitIndex"`
-	TimeZone         string `json:"timeZone"`
-	Value            string `json:"value"`
-	ValueType        string `json:"valueType"`
+	AlternateValues  []string                `json:"alternateValues"`
+	CaseInsensitive  bool                    `json:"caseInsensitive"`
+	DefaultValue     bool                    `json:"defaultValue"`
+	FieldJoin        string                  `json:"fieldJoin"`
+	Format           string                  `json:"format"`
+	FormatParameters string                  `json:"formatParameters"`
+	JoinDelimiter    string                  `json:"joinDelimiter"`
+	Lookup           []LogMappingFieldLookup `json:"lookup"`
+	Name             string                  `json:"name"`
+	SkippedValues    string                  `json:"skippedValues"`
+	SplitDelimiter   string                  `json:"splitDelimiter"`
+	SplitIndex       string                  `json:"splitIndex"`
+	TimeZone         string                  `json:"timeZone"`
+	Value            string                  `json:"value"`
+	ValueType        string                  `json:"valueType"`
+}
+
+type LogMappingFieldLookup struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 type LogMappingStructuredInput struct {
@@ -173,7 +178,7 @@ func hasConfigChanges(d resourceDiffer) bool {
 		d.HasChange("record_type") ||
 		d.HasChange("relates_entities") ||
 		d.HasChange("source") ||
-		d.HasChange("unstructured_field") ||
+		d.HasChange("field") ||
 		d.HasChange("skipped_values") ||
 		d.HasChange("structured_input")
 }
