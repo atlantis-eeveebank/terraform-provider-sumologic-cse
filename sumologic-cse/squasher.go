@@ -10,6 +10,15 @@ func flattenData(data interface{}) ([]map[string]interface{}, error) {
 	switch d := data.(type) {
 	case []LogMappingField:
 		for _, f := range d {
+			var lookups []map[string]interface{}
+			for _, l := range f.Lookup {
+				lookup := map[string]interface{}{
+					"key": l.Key,
+					"value": l.Value,
+				}
+				lookups = append(lookups, lookup)
+			}
+
 			var field = map[string]interface{}{
 				"name":             f.Name,
 				"value":            f.Value,
@@ -18,9 +27,8 @@ func flattenData(data interface{}) ([]map[string]interface{}, error) {
 				"alternate_values": f.AlternateValues,
 				"case_insensitive": f.CaseInsensitive,
 				"default_value":    f.DefaultValue,
-				"lookup":           f.Lookup,
+				"lookup":           lookups,
 			}
-
 			flattenData = append(flattenData, field)
 		}
 	case []LogMappingStructuredInput:
