@@ -11,10 +11,14 @@ func flattenData(data interface{}) ([]map[string]interface{}, error) {
 	case []LogMappingField:
 		for _, f := range d {
 			var field = map[string]interface{}{
-				"name":       f.Name,
-				"value":      f.Value,
-				"format":     f.Format,
-				"value_type": f.ValueType,
+				"name":             f.Name,
+				"value":            f.Value,
+				"format":           f.Format,
+				"value_type":       f.ValueType,
+				"alternate_values": f.AlternateValues,
+				"case_insensitive": f.CaseInsensitive,
+				"default_value":    f.DefaultValue,
+				"lookup":           f.Lookup,
 			}
 
 			flattenData = append(flattenData, field)
