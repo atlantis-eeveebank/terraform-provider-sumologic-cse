@@ -58,6 +58,18 @@ func (c *Client) translateToPermissionIds(pemissionNames []interface{}) ([]strin
 	return pl, nil
 }
 
+func (c *Client) Enabled(id, objectType string, enable bool) error {
+	payload := []byte(fmt.Sprintf(`{"enabled": %t}`, enable))
+	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/%s/%s/enabled", c.HostURL, objectType, id), bytes.NewBuffer(payload))
+
+	_, err = c.doRequest(req)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // ----------------------------------------------------------------------------
 // CRUD Functions
 // ----------------------------------------------------------------------------
@@ -130,6 +142,12 @@ func (c *Client) Create(data interface{}) (string, error) {
 		if err != nil {
 			return "", err
 		}
+	case RuleRequest:
+		objectType = "rules"
+		payload, err = json.Marshal(data.(RuleRequest))
+		if err != nil {
+			return "", err
+		}
 	default:
 		return "", errors.New("type not expected")
 	}
@@ -158,6 +176,8 @@ func (c *Client) Create(data interface{}) (string, error) {
 		return data.(NetworkBlockResponse).NetworkBlock.Id, nil
 	case RoleRequest:
 		return data.(RoleResponse).Role.Id, nil
+	case RuleRequest:
+		return data.(RuleResponse).Rule.Id, nil
 	}
 
 	return "", errors.New("type not expected")
@@ -204,6 +224,13 @@ func (c *Client) Read(objectType string, id string) (interface{}, error) {
 			return data, err
 		}
 		return data, nil
+	case "rules":
+		var data RuleResponse
+		err = json.Unmarshal(body, &data)
+		if err != nil {
+			return data, err
+		}
+		return data, nil
 	default:
 		return nil, errors.New("type not expected")
 	}
@@ -242,6 +269,12 @@ func (c *Client) Update(id string, data interface{}) error {
 	case RoleRequest:
 		objectType = "roles"
 		payload, err = json.Marshal(data.(RoleRequest))
+		if err != nil {
+			return err
+		}
+	case RuleRequest:
+		objectType = "rules"
+		payload, err = json.Marshal(data.(RuleRequest))
 		if err != nil {
 			return err
 		}
@@ -290,6 +323,13 @@ func (c *Client) Update(id string, data interface{}) error {
 		return nil
 	case RoleRequest:
 		var data RoleResponse
+		err = json.Unmarshal(body, &data)
+		if err != nil {
+			return err
+		}
+		return nil
+	case RuleRequest:
+		var data RuleResponse
 		err = json.Unmarshal(body, &data)
 		if err != nil {
 			return err

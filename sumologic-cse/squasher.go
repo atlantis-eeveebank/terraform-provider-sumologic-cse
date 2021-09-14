@@ -13,7 +13,7 @@ func flattenData(data interface{}) ([]map[string]interface{}, error) {
 			var lookups []map[string]interface{}
 			for _, l := range f.Lookup {
 				lookup := map[string]interface{}{
-					"key": l.Key,
+					"key":   l.Key,
 					"value": l.Value,
 				}
 				lookups = append(lookups, lookup)
@@ -49,6 +49,30 @@ func flattenData(data interface{}) ([]map[string]interface{}, error) {
 			}
 			flattenData = append(flattenData, permission)
 		}
+	case []RuleAggregationFunction:
+		for _, i := range d {
+			var input = map[string]interface{}{
+				"arguments": i.Arguments,
+				"function":  i.Function,
+				"name":      i.Name,
+			}
+			flattenData = append(flattenData, input)
+		}
+	case []RuleEntitySelector:
+		for _, i := range d {
+			var input = map[string]interface{}{
+				"entity_type": i.EntityType,
+				"expression":  i.Expression,
+			}
+			flattenData = append(flattenData, input)
+		}
+	case RuleScoreMapping:
+		var input = map[string]interface{}{
+			"default": d.Default,
+			"field":   d.Field,
+			"type":    d.Type,
+		}
+		flattenData = append(flattenData, input)
 	case []User:
 		for _, u := range d {
 			var user = map[string]interface{}{

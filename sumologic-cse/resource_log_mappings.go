@@ -200,7 +200,7 @@ func resourceLogMapping() *schema.Resource {
 	}
 }
 
-func hasConfigChanges(d resourceDiffer) bool {
+func logMappingHasChanges(d resourceDiffer) bool {
 	return d.HasChange("enabled") ||
 		d.HasChange("name") ||
 		d.HasChange("product_guid") ||
@@ -307,7 +307,7 @@ func resourceLogMappingRead(ctx context.Context, d *schema.ResourceData, m inter
 }
 
 func resourceLogMappingUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	if hasConfigChanges(d) {
+	if logMappingHasChanges(d) {
 		c := m.(*Client)
 
 		err := c.Update(d.Id(), LogMappingRequest{
