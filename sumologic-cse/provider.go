@@ -32,6 +32,8 @@ func Provider() *schema.Provider {
 			"sumologiccse_log_mapping":        resourceLogMapping(),
 			"sumologiccse_network_block":      resourceNetworkBlock(),
 			"sumologiccse_aggregation_rule":   resourceAggregationRule(),
+			"sumologiccse_match_rule":         resourceMatchRule(),
+			"sumologiccse_threshold_rule":     resourceThresholdRule(),
 		},
 	}
 }

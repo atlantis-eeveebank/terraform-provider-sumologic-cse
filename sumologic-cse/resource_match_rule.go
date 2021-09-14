@@ -6,11 +6,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceAggregationRule() *schema.Resource {
+func resourceMatchRule() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceAggregationRuleCreate,
-		ReadContext:   resourceAggregationRuleRead,
-		UpdateContext: resourceAggregationRuleUpdate,
+		CreateContext: resourceMatchRuleCreate,
+		ReadContext:   resourceMatchRuleRead,
+		UpdateContext: resourceMatchRuleUpdate,
 		DeleteContext: resourceRuleDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -28,11 +28,11 @@ func resourceAggregationRule() *schema.Resource {
 				Type:     schema.TypeBool,
 				Required: true,
 			},
-			"group_by_asset": &schema.Schema{
-				Type:     schema.TypeBool,
-				Required: true,
-			},
 			"is_prototype": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"count_distinct": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
@@ -40,11 +40,11 @@ func resourceAggregationRule() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"description_expression": &schema.Schema{
+			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"match_expression": &schema.Schema{
+			"expression": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -52,13 +52,13 @@ func resourceAggregationRule() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"name_expression": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-			},
 			"parent_jask_id": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
+			},
+			"score": &schema.Schema{
+				Type:     schema.TypeInt,
+				Required: true,
 			},
 			"stream": &schema.Schema{
 				Type:     schema.TypeString,
@@ -68,19 +68,6 @@ func resourceAggregationRule() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"trigger_expression": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-			},
-			"window_size": &schema.Schema{
-				Type:     schema.TypeInt,
-				Optional: true,
-			},
-			"group_by_fields": &schema.Schema{
-				Type:     schema.TypeList,
-				Required: true,
-				Elem:     &schema.Schema{Type: schema.TypeString},
-			},
 			"tags": &schema.Schema{
 				Type:     schema.TypeList,
 				Required: true,
@@ -88,29 +75,8 @@ func resourceAggregationRule() *schema.Resource {
 			},
 			"tuning_expression_ids": &schema.Schema{
 				Type:     schema.TypeList,
-				Required: true,
+				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
-			},
-			"aggregation_function": &schema.Schema{
-				Type:     schema.TypeList,
-				Required: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"function": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"name": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
-						},
-						"arguments": &schema.Schema{
-							Type:     schema.TypeList,
-							Required: true,
-							Elem:     &schema.Schema{Type: schema.TypeString},
-						},
-					},
-				},
 			},
 			"entity_selector": &schema.Schema{
 				Type:     schema.TypeList,
@@ -128,79 +94,49 @@ func resourceAggregationRule() *schema.Resource {
 					},
 				},
 			},
-			"score_mapping": &schema.Schema{
-				Type:     schema.TypeList,
-				Required: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"default": &schema.Schema{
-							Type:     schema.TypeInt,
-							Optional: true,
-						},
-						"field": &schema.Schema{
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-						"type": &schema.Schema{
-							Type:     schema.TypeString,
-							Optional: true,
-						},
-					},
-				},
-			},
 		},
 	}
 }
 
-func aggregationRuleHasChanges(d resourceDiffer) bool {
-	return d.HasChange("group_by_asset") ||
-		d.HasChange("is_prototype") ||
-		d.HasChange("asset_field") ||
+func matchRuleHasChanges(d resourceDiffer) bool {
+	return d.HasChange("is_prototype") ||
 		d.HasChange("category") ||
-		d.HasChange("description_expression") ||
-		d.HasChange("match_expression") ||
+		d.HasChange("description") ||
+		d.HasChange("asset_field") ||
+		d.HasChange("expression") ||
 		d.HasChange("name") ||
-		d.HasChange("name_expression") ||
 		d.HasChange("parent_jask_id") ||
+		d.HasChange("count_distinct") ||
 		d.HasChange("stream") ||
 		d.HasChange("summary_expression") ||
-		d.HasChange("trigger_expression") ||
-		d.HasChange("window_size") ||
-		d.HasChange("group_by_fields") ||
 		d.HasChange("tags") ||
 		d.HasChange("tuning_expression_ids") ||
-		d.HasChange("aggregation_function") ||
 		d.HasChange("entity_selector") ||
 		d.HasChange("score_mapping")
 }
 
-func resourceAggregationRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceMatchRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	c := m.(*Client)
 
 	id, err := c.Create(RuleRequest{
 		Fields: RulePayload{
-			AggregationFunctions: d.Get("aggregation_function").([]RuleAggregationFunction),
 			AssetField: d.Get("asset_field").(string),
 			Category: d.Get("category").(string),
-			DescriptionExpression: d.Get("description_expression").(string),
+			CountDistinct: d.Get("count_distinct").(bool),
+			Description: d.Get("description").(string),
 			Enabled: d.Get("enabled").(bool),
 			EntitySelectors: d.Get("entity_selector").([]RuleEntitySelector),
-			GroupByAsset: d.Get("group_by_asset").(bool),
-			GroupByFields: d.Get("group_by_fields").([]string),
 			IsPrototype: d.Get("is_prototype").(bool),
-			MatchExpression: d.Get("match_expression").(string),
+			Expression: d.Get("expression").(string),
 			Name: d.Get("name").(string),
-			NameExpression: d.Get("name_expression").(string),
 			ParentJaskId: d.Get("parent_jask_id").(string),
-			ScoreMapping: d.Get("score_mapping").(RuleScoreMapping),
+			Score: d.Get("score").(int),
 			Stream: d.Get("stream").(string),
 			SummaryExpression: d.Get("summary_expression").(string),
 			Tags: d.Get("tags").([]string),
-			TriggerExpression: d.Get("tuning_expression_ids").(string),
 			TuningExpressionIds: d.Get("tags").([]string),
-			WindowSize: d.Get("window_size").(string),
 		},
 	})
 	if err != nil {
@@ -208,12 +144,12 @@ func resourceAggregationRuleCreate(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	d.SetId(id)
-	resourceAggregationRuleRead(ctx, d, m)
+	resourceMatchRuleRead(ctx, d, m)
 
 	return diags
 }
 
-func resourceAggregationRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceMatchRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	c := m.(*Client)
@@ -228,17 +164,12 @@ func resourceAggregationRuleRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
+	err = d.Set("count_distinct", result.(RuleResponse).Rule.CountDistinct)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	err = d.Set("enabled", result.(RuleResponse).Rule.Enabled)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	err = d.Set("asset_field", result.(RuleResponse).Rule.AssetField)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	err = d.Set("group_by_asset", result.(RuleResponse).Rule.GroupByAsset)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -253,12 +184,12 @@ func resourceAggregationRuleRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	err = d.Set("description_expression", result.(RuleResponse).Rule.DescriptionExpression)
+	err = d.Set("description", result.(RuleResponse).Rule.Description)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	err = d.Set("match_expression", result.(RuleResponse).Rule.MatchExpression)
+	err = d.Set("expression", result.(RuleResponse).Rule.Expression)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -268,12 +199,12 @@ func resourceAggregationRuleRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	err = d.Set("name_expression", result.(RuleResponse).Rule.NameExpression)
+	err = d.Set("parent_jask_id", result.(RuleResponse).Rule.ParentJaskId)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	err = d.Set("parent_jask_id", result.(RuleResponse).Rule.ParentJaskId)
+	err = d.Set("score", result.(RuleResponse).Rule.Score)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -288,36 +219,12 @@ func resourceAggregationRuleRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	err = d.Set("trigger_expression", result.(RuleResponse).Rule.TriggerExpression)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	err = d.Set("window_size", result.(RuleResponse).Rule.WindowSize)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	err = d.Set("group_by_fields", result.(RuleResponse).Rule.GroupByFields)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	err = d.Set("tags", result.(RuleResponse).Rule.Tags)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	err = d.Set("tuning_expression_ids", result.(RuleResponse).Rule.TuningExpressionIds)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	af, err := flattenData(result.(RuleResponse).Rule.AggregationFunctions)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	err = d.Set("aggregation_function", af)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -331,43 +238,30 @@ func resourceAggregationRuleRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	sm, err := flattenData(result.(RuleResponse).Rule.ScoreMapping)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	err = d.Set("score_mapping", sm)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	return diags
 }
 
-func resourceAggregationRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceMatchRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	if aggregationRuleHasChanges(d) {
+	if matchRuleHasChanges(d) {
 		err := c.Update(d.Id(), RuleRequest{
 			Fields: RulePayload{
-				AggregationFunctions: d.Get("aggregation_function").([]RuleAggregationFunction),
 				AssetField: d.Get("asset_field").(string),
 				Category: d.Get("category").(string),
-				DescriptionExpression: d.Get("description_expression").(string),
+				CountDistinct: d.Get("count_distinct").(bool),
+				Description: d.Get("description").(string),
 				EntitySelectors: d.Get("entity_selector").([]RuleEntitySelector),
-				GroupByAsset: d.Get("group_by_asset").(bool),
-				GroupByFields: d.Get("group_by_fields").([]string),
 				IsPrototype: d.Get("is_prototype").(bool),
-				MatchExpression: d.Get("match_expression").(string),
+				Expression: d.Get("expression").(string),
 				Name: d.Get("name").(string),
-				NameExpression: d.Get("name_expression").(string),
 				ParentJaskId: d.Get("parent_jask_id").(string),
-				ScoreMapping: d.Get("score_mapping").(RuleScoreMapping),
+				Score: d.Get("score_mapping").(int),
 				Stream: d.Get("stream").(string),
 				SummaryExpression: d.Get("summary_expression").(string),
 				Tags: d.Get("tags").([]string),
 				TriggerExpression: d.Get("tuning_expression_ids").(string),
 				TuningExpressionIds: d.Get("tags").([]string),
-				WindowSize: d.Get("window_size").(string),
 			},
 		})
 		if err != nil {
@@ -382,5 +276,5 @@ func resourceAggregationRuleUpdate(ctx context.Context, d *schema.ResourceData, 
 		}
 	}
 
-	return resourceAggregationRuleRead(ctx, d, m)
+	return resourceMatchRuleRead(ctx, d, m)
 }
