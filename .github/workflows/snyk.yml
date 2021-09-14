@@ -2,7 +2,7 @@ name: Snyk Golang Scan
 on: pull_request
 jobs:
   snyk:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Snyk Monitor
         uses: eeveebank/github-actions-snyk/monitor@master

@@ -31,6 +31,7 @@ func Provider() *schema.Provider {
 			"sumologiccse_custom_insight":     resourceCustomInsight(),
 			"sumologiccse_log_mapping":        resourceLogMapping(),
 			"sumologiccse_network_block":      resourceNetworkBlock(),
+			"sumologiccse_aggregation_rule":   resourceAggregationRule(),
 		},
 	}
 }
