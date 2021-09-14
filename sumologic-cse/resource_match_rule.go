@@ -112,7 +112,7 @@ func matchRuleHasChanges(d resourceDiffer) bool {
 		d.HasChange("tags") ||
 		d.HasChange("tuning_expression_ids") ||
 		d.HasChange("entity_selector") ||
-		d.HasChange("score_mapping")
+		d.HasChange("score")
 }
 
 func resourceMatchRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -256,7 +256,7 @@ func resourceMatchRuleUpdate(ctx context.Context, d *schema.ResourceData, m inte
 				Expression: d.Get("expression").(string),
 				Name: d.Get("name").(string),
 				ParentJaskId: d.Get("parent_jask_id").(string),
-				Score: d.Get("score_mapping").(int),
+				Score: d.Get("score").(int),
 				Stream: d.Get("stream").(string),
 				SummaryExpression: d.Get("summary_expression").(string),
 				Tags: d.Get("tags").([]string),
