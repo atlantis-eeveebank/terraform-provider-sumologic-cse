@@ -148,7 +148,7 @@ func resourceAggregationRule() *schema.Resource {
 	}
 }
 
-func aggregationRulehasChanges(d resourceDiffer) bool {
+func aggregationRuleHasChanges(d resourceDiffer) bool {
 	return d.HasChange("group_by_asset") ||
 		d.HasChange("is_prototype") ||
 		d.HasChange("category") ||
@@ -331,7 +331,7 @@ func resourceAggregationRuleRead(ctx context.Context, d *schema.ResourceData, m 
 func resourceAggregationRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	if aggregationRulehasChanges(d) {
+	if aggregationRuleHasChanges(d) {
 		err := c.Update(d.Id(), RuleRequest{
 			Fields: RulePayload{
 				AggregationFunctions: d.Get("aggregation_function").([]RuleAggregationFunction),
