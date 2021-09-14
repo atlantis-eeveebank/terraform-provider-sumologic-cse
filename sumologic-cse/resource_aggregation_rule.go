@@ -233,11 +233,6 @@ func resourceAggregationRuleRead(ctx context.Context, d *schema.ResourceData, m 
 		return diag.FromErr(err)
 	}
 
-	err = d.Set("asset_field", result.(RuleResponse).Rule.AssetField)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	err = d.Set("group_by_asset", result.(RuleResponse).Rule.GroupByAsset)
 	if err != nil {
 		return diag.FromErr(err)
