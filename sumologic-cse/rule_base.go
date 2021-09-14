@@ -20,10 +20,13 @@ type Rule struct {
 	HasOverride           bool     `json:"hasOverride"`
 	IsPrototype           bool     `json:"isPrototype"`
 	GroupByAsset          bool     `json:"groupByAsset"`
+	CountDistinct         bool     `json:"countDistinct"`
 	AssetField            string   `json:"assetField"`
 	Category              string   `json:"category"`
 	ContentType           string   `json:"contentType"`
+	CountField            string   `json:"countField"`
 	CreatedBy             string   `json:"createdBy"`
+	Description           string   `json:"description"`
 	DescriptionExpression string   `json:"descriptionExpression"`
 	Expression            string   `json:"expression"`
 	Id                    string   `json:"id"`
@@ -38,9 +41,12 @@ type Rule struct {
 	SummaryExpression     string   `json:"summaryExpression"`
 	TriggerExpression     string   `json:"triggerExpression"`
 	RuleId                int      `json:"ruleId"`
+	Limit                 int      `json:"limit"`
+	Score                 int      `json:"score"`
 	SignalCount07D        int      `json:"signalCount07d"`
 	SignalCount24H        int      `json:"signalCount24h"`
 	WindowSize            int      `json:"windowSize"`
+	Version               int      `json:"version"`
 	GroupByFields         []string `json:"groupByFields"`
 	Tags                  []string `json:"tags"`
 	TuningExpressionIds   []string `json:"tuningExpressionIds"`
@@ -54,11 +60,15 @@ type Rule struct {
 type RulePayload struct {
 	Enabled               bool     `json:"enabled"`
 	GroupByAsset          bool     `json:"groupByAsset"`
+	CountDistinct         bool     `json:"countDistinct"`
 	IsPrototype           bool     `json:"isPrototype"`
 	AssetField            string   `json:"assetField"`
 	Category              string   `json:"category"`
+	CountField            string   `json:"countField"`
+	Description           string   `json:"description"`
 	DescriptionExpression string   `json:"descriptionExpression"`
 	MatchExpression       string   `json:"matchExpression"`
+	Expression            string   `json:"expression"`
 	Name                  string   `json:"name"`
 	NameExpression        string   `json:"nameExpression"`
 	ParentJaskId          string   `json:"parentJaskId"`
@@ -66,6 +76,9 @@ type RulePayload struct {
 	SummaryExpression     string   `json:"summaryExpression"`
 	TriggerExpression     string   `json:"triggerExpression"`
 	WindowSize            string   `json:"windowSize"`
+	Limit                 int      `json:"limit"`
+	Score                 int      `json:"score"`
+	Version               int      `json:"version"`
 	GroupByFields         []string `json:"groupByFields"`
 	Tags                  []string `json:"tags"`
 	TuningExpressionIds   []string `json:"tuningExpressionIds"`
