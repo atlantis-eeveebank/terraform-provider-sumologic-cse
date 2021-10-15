@@ -6,6 +6,32 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+type ThresholdRuleRequest struct {
+	Fields ThresholdRulePayload `json:"fields"`
+}
+
+type ThresholdRulePayload struct {
+	AssetField          string               `json:"assetField"`
+	Category            string               `json:"category"`
+	CountDistinct       bool                 `json:"countDistinct"`
+	CountField          string               `json:"countField"`
+	Description         string               `json:"description"`
+	Enabled             bool                 `json:"enabled"`
+	EntitySelectors     []RuleEntitySelector `json:"entitySelectors"`
+	Expression          string               `json:"expression"`
+	GroupByFields       []string             `json:"groupByFields"`
+	IsPrototype         bool                 `json:"isPrototype"`
+	Limit               int                  `json:"limit"`
+	Name                string               `json:"name"`
+	Score               int                  `json:"score"`
+	Stream              string               `json:"stream"`
+	SummaryExpression   string               `json:"summaryExpression"`
+	Tags                []string             `json:"tags"`
+	TuningExpressionIds []string             `json:"tuningExpressionIds"`
+	Version             int                  `json:"version"`
+	WindowSize          string               `json:"windowSize"`
+}
+
 func resourceThresholdRule() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceThresholdRuleCreate,
@@ -77,7 +103,7 @@ func resourceThresholdRule() *schema.Resource {
 				Optional: true,
 			},
 			"window_size": &schema.Schema{
-				Type:     schema.TypeInt,
+				Type:     schema.TypeString,
 				Optional: true,
 			},
 			"version": &schema.Schema{
@@ -120,25 +146,25 @@ func resourceThresholdRule() *schema.Resource {
 }
 
 func thresholdRuleHasChanges(d resourceDiffer) bool {
-	return d.HasChange("is_prototype") ||
+	return d.HasChange("asset_field") ||
 		d.HasChange("category") ||
 		d.HasChange("count_distinct") ||
-		d.HasChange("asset_field") ||
 		d.HasChange("count_field") ||
 		d.HasChange("description") ||
+		d.HasChange("entity_selector") ||
 		d.HasChange("expression") ||
+		d.HasChange("group_by_fields") ||
 		d.HasChange("limit") ||
 		d.HasChange("name") ||
 		d.HasChange("parent_jask_id") ||
+		d.HasChange("score") ||
 		d.HasChange("stream") ||
 		d.HasChange("summary_expression") ||
-		d.HasChange("window_size") ||
-		d.HasChange("group_by_fields") ||
 		d.HasChange("tags") ||
 		d.HasChange("tuning_expression_ids") ||
-		d.HasChange("entity_selector") ||
 		d.HasChange("version") ||
-		d.HasChange("score")
+		d.HasChange("window_size") ||
+		d.HasChange("is_prototype")
 }
 
 func resourceThresholdRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -146,28 +172,27 @@ func resourceThresholdRuleCreate(ctx context.Context, d *schema.ResourceData, m 
 
 	c := m.(*Client)
 
-	id, err := c.Create(RuleRequest{
-		Fields: RulePayload{
-			AssetField: d.Get("asset_field").(string),
-			Category: d.Get("category").(string),
-			Description: d.Get("description").(string),
-			Enabled: d.Get("enabled").(bool),
-			CountDistinct: d.Get("count_distinct").(bool),
-			CountField: d.Get("count_field").(string),
-			EntitySelectors: d.Get("entity_selector").([]RuleEntitySelector),
-			GroupByFields: d.Get("group_by_fields").([]string),
-			IsPrototype: d.Get("is_prototype").(bool),
-			Expression: d.Get("expression").(string),
-			Limit: d.Get("limit").(int),
-			Name: d.Get("name").(string),
-			ParentJaskId: d.Get("parent_jask_id").(string),
-			Score: d.Get("score").(int),
-			Stream: d.Get("stream").(string),
-			SummaryExpression: d.Get("summary_expression").(string),
-			Tags: d.Get("tags").([]string),
-			TuningExpressionIds: d.Get("tags").([]string),
-			WindowSize: d.Get("window_size").(string),
-			Version: d.Get("version").(int),
+	id, err := c.Create(ThresholdRuleRequest{
+		Fields: ThresholdRulePayload{
+			AssetField:          d.Get("asset_field").(string),
+			Category:            d.Get("category").(string),
+			CountDistinct:       d.Get("count_distinct").(bool),
+			CountField:          d.Get("count_field").(string),
+			Description:         d.Get("description").(string),
+			Enabled:             d.Get("enabled").(bool),
+			EntitySelectors:     toEntitySelectorSlice(d.Get("entity_selector")),
+			Expression:          d.Get("expression").(string),
+			GroupByFields:       toStringSlice(d.Get("group_by_fields")),
+			IsPrototype:         d.Get("is_prototype").(bool),
+			Limit:               d.Get("limit").(int),
+			Name:                d.Get("name").(string),
+			Score:               d.Get("score").(int),
+			Stream:              d.Get("stream").(string),
+			SummaryExpression:   d.Get("summary_expression").(string),
+			Tags:                toStringSlice(d.Get("tags")),
+			TuningExpressionIds: toStringSlice(d.Get("tuning_expression_ids")),
+			Version:             d.Get("version").(int),
+			WindowSize:          d.Get("window_size").(string),
 		},
 	})
 	if err != nil {
@@ -301,28 +326,26 @@ func resourceThresholdRuleUpdate(ctx context.Context, d *schema.ResourceData, m 
 	c := m.(*Client)
 
 	if thresholdRuleHasChanges(d) {
-		err := c.Update(d.Id(), RuleRequest{
-			Fields: RulePayload{
-				AssetField: d.Get("asset_field").(string),
-				Category: d.Get("category").(string),
-				Description: d.Get("description").(string),
-				CountDistinct: d.Get("count_distinct").(bool),
-				CountField: d.Get("count_field").(string),
-				EntitySelectors: d.Get("entity_selector").([]RuleEntitySelector),
-				GroupByFields: d.Get("group_by_fields").([]string),
-				IsPrototype: d.Get("is_prototype").(bool),
-				Expression: d.Get("expression").(string),
-				Limit: d.Get("name").(int),
-				Name: d.Get("name").(string),
-				ParentJaskId: d.Get("parent_jask_id").(string),
-				Score: d.Get("score").(int),
-				Stream: d.Get("stream").(string),
-				SummaryExpression: d.Get("summary_expression").(string),
-				Tags: d.Get("tags").([]string),
-				TriggerExpression: d.Get("tuning_expression_ids").(string),
-				TuningExpressionIds: d.Get("tags").([]string),
-				WindowSize: d.Get("window_size").(string),
-				Version: d.Get("version").(int),
+		err := c.Update(d.Id(), ThresholdRuleRequest{
+			Fields: ThresholdRulePayload{
+				AssetField:          d.Get("asset_field").(string),
+				Category:            d.Get("category").(string),
+				CountDistinct:       d.Get("count_distinct").(bool),
+				CountField:          d.Get("count_field").(string),
+				Description:         d.Get("description").(string),
+				EntitySelectors:     toEntitySelectorSlice(d.Get("entity_selector")),
+				Expression:          d.Get("expression").(string),
+				GroupByFields:       toStringSlice(d.Get("group_by_fields")),
+				IsPrototype:         d.Get("is_prototype").(bool),
+				Limit:               d.Get("limit").(int),
+				Name:                d.Get("name").(string),
+				Score:               d.Get("score").(int),
+				Stream:              d.Get("stream").(string),
+				SummaryExpression:   d.Get("summary_expression").(string),
+				Tags:                toStringSlice(d.Get("tags")),
+				TuningExpressionIds: toStringSlice(d.Get("tuning_expression_ids")),
+				Version:             d.Get("version").(int),
+				WindowSize:          d.Get("window_size").(string),
 			},
 		})
 		if err != nil {

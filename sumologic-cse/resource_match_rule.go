@@ -6,11 +6,32 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceMatchRule() *schema.Resource {
+type TemplatedRuleRequest struct {
+	Fields TemplatedRulePayload `json:"fields"`
+}
+
+type TemplatedRulePayload struct {
+	AssetField            string               `json:"assetField"`
+	Category              string               `json:"category"`
+	DescriptionExpression string               `json:"descriptionExpression"`
+	Enabled               bool                 `json:"enabled"`
+	EntitySelectors       []RuleEntitySelector `json:"entitySelectors"`
+	Expression            string               `json:"expression"`
+	IsPrototype           bool                 `json:"isPrototype"`
+	Name                  string               `json:"name"`
+	NameExpression        string               `json:"nameExpression"`
+	ScoreMapping          RuleScoreMapping     `json:"scoreMapping"`
+	Stream                string               `json:"stream"`
+	SummaryExpression     string               `json:"summaryExpression"`
+	Tags                  []string             `json:"tags"`
+	TuningExpressionIds   []string             `json:"tuningExpressionIds"`
+}
+
+func resourceTemplatedRule() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceMatchRuleCreate,
-		ReadContext:   resourceMatchRuleRead,
-		UpdateContext: resourceMatchRuleUpdate,
+		CreateContext: resourceTemplatedRuleCreate,
+		ReadContext:   resourceTemplatedRuleRead,
+		UpdateContext: resourceTemplatedRuleUpdate,
 		DeleteContext: resourceRuleDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -32,15 +53,11 @@ func resourceMatchRule() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
-			"count_distinct": &schema.Schema{
-				Type:     schema.TypeBool,
-				Optional: true,
-			},
 			"category": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"description": &schema.Schema{
+			"description_expression": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -52,13 +69,13 @@ func resourceMatchRule() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"name_expression": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+			},
 			"parent_jask_id": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-			},
-			"score": &schema.Schema{
-				Type:     schema.TypeInt,
-				Required: true,
 			},
 			"stream": &schema.Schema{
 				Type:     schema.TypeString,
@@ -94,49 +111,68 @@ func resourceMatchRule() *schema.Resource {
 					},
 				},
 			},
+			"score_mapping": &schema.Schema{
+				Type:     schema.TypeList,
+				Required: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"default": &schema.Schema{
+							Type:     schema.TypeInt,
+							Optional: true,
+						},
+						"field": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"type": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
 
-func matchRuleHasChanges(d resourceDiffer) bool {
-	return d.HasChange("is_prototype") ||
+func templatedRuleHasChanges(d resourceDiffer) bool {
+	return d.HasChange("asset_field") ||
 		d.HasChange("category") ||
-		d.HasChange("description") ||
-		d.HasChange("asset_field") ||
+		d.HasChange("description_expression") ||
+		d.HasChange("entity_selector") ||
 		d.HasChange("expression") ||
+		d.HasChange("is_prototype") ||
 		d.HasChange("name") ||
+		d.HasChange("name_expression") ||
 		d.HasChange("parent_jask_id") ||
-		d.HasChange("count_distinct") ||
+		d.HasChange("score_mapping") ||
 		d.HasChange("stream") ||
 		d.HasChange("summary_expression") ||
 		d.HasChange("tags") ||
-		d.HasChange("tuning_expression_ids") ||
-		d.HasChange("entity_selector") ||
-		d.HasChange("score")
+		d.HasChange("tuning_expression_ids")
 }
 
-func resourceMatchRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTemplatedRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	c := m.(*Client)
 
-	id, err := c.Create(RuleRequest{
-		Fields: RulePayload{
-			AssetField: d.Get("asset_field").(string),
-			Category: d.Get("category").(string),
-			CountDistinct: d.Get("count_distinct").(bool),
-			Description: d.Get("description").(string),
-			Enabled: d.Get("enabled").(bool),
-			EntitySelectors: d.Get("entity_selector").([]RuleEntitySelector),
-			IsPrototype: d.Get("is_prototype").(bool),
-			Expression: d.Get("expression").(string),
-			Name: d.Get("name").(string),
-			ParentJaskId: d.Get("parent_jask_id").(string),
-			Score: d.Get("score").(int),
-			Stream: d.Get("stream").(string),
-			SummaryExpression: d.Get("summary_expression").(string),
-			Tags: d.Get("tags").([]string),
-			TuningExpressionIds: d.Get("tags").([]string),
+	id, err := c.Create(TemplatedRuleRequest{
+		Fields: TemplatedRulePayload{
+			AssetField:            d.Get("asset_field").(string),
+			Category:              d.Get("category").(string),
+			DescriptionExpression: d.Get("description_expression").(string),
+			Enabled:               d.Get("enabled").(bool),
+			EntitySelectors:       toEntitySelectorSlice(d.Get("entity_selector")),
+			Expression:            d.Get("expression").(string),
+			IsPrototype:           d.Get("is_prototype").(bool),
+			Name:                  d.Get("name").(string),
+			NameExpression:        d.Get("name_expression").(string),
+			ScoreMapping:          toStructRuleScoreMapping(d.Get("score_mapping")),
+			Stream:                d.Get("stream").(string),
+			SummaryExpression:     d.Get("summary_expression").(string),
+			Tags:                  toStringSlice(d.Get("tags")),
+			TuningExpressionIds:   toStringSlice(d.Get("tuning_expression_ids")),
 		},
 	})
 	if err != nil {
@@ -144,12 +180,12 @@ func resourceMatchRuleCreate(ctx context.Context, d *schema.ResourceData, m inte
 	}
 
 	d.SetId(id)
-	resourceMatchRuleRead(ctx, d, m)
+	resourceTemplatedRuleRead(ctx, d, m)
 
 	return diags
 }
 
-func resourceMatchRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTemplatedRuleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	c := m.(*Client)
@@ -160,11 +196,6 @@ func resourceMatchRuleRead(ctx context.Context, d *schema.ResourceData, m interf
 	}
 
 	err = d.Set("asset_field", result.(RuleResponse).Rule.AssetField)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	err = d.Set("count_distinct", result.(RuleResponse).Rule.CountDistinct)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -184,7 +215,7 @@ func resourceMatchRuleRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	err = d.Set("description", result.(RuleResponse).Rule.Description)
+	err = d.Set("description_expression", result.(RuleResponse).Rule.DescriptionExpression)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -199,12 +230,12 @@ func resourceMatchRuleRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
-	err = d.Set("parent_jask_id", result.(RuleResponse).Rule.ParentJaskId)
+	err = d.Set("name_expression", result.(RuleResponse).Rule.NameExpression)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	err = d.Set("score", result.(RuleResponse).Rule.Score)
+	err = d.Set("parent_jask_id", result.(RuleResponse).Rule.ParentJaskId)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -238,30 +269,37 @@ func resourceMatchRuleRead(ctx context.Context, d *schema.ResourceData, m interf
 		return diag.FromErr(err)
 	}
 
+	sm, err := flattenData(result.(RuleResponse).Rule.ScoreMapping)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	err = d.Set("score_mapping", sm)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	return diags
 }
 
-func resourceMatchRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+func resourceTemplatedRuleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	c := m.(*Client)
 
-	if matchRuleHasChanges(d) {
-		err := c.Update(d.Id(), RuleRequest{
-			Fields: RulePayload{
-				AssetField: d.Get("asset_field").(string),
-				Category: d.Get("category").(string),
-				CountDistinct: d.Get("count_distinct").(bool),
-				Description: d.Get("description").(string),
-				EntitySelectors: d.Get("entity_selector").([]RuleEntitySelector),
-				IsPrototype: d.Get("is_prototype").(bool),
-				Expression: d.Get("expression").(string),
-				Name: d.Get("name").(string),
-				ParentJaskId: d.Get("parent_jask_id").(string),
-				Score: d.Get("score").(int),
-				Stream: d.Get("stream").(string),
-				SummaryExpression: d.Get("summary_expression").(string),
-				Tags: d.Get("tags").([]string),
-				TriggerExpression: d.Get("tuning_expression_ids").(string),
-				TuningExpressionIds: d.Get("tags").([]string),
+	if templatedRuleHasChanges(d) {
+		err := c.Update(d.Id(), TemplatedRuleRequest{
+			Fields: TemplatedRulePayload{
+				AssetField:            d.Get("asset_field").(string),
+				Category:              d.Get("category").(string),
+				DescriptionExpression: d.Get("description_expression").(string),
+				EntitySelectors:       toEntitySelectorSlice(d.Get("entity_selector")),
+				Expression:            d.Get("expression").(string),
+				IsPrototype:           d.Get("is_prototype").(bool),
+				Name:                  d.Get("name").(string),
+				NameExpression:        d.Get("name_expression").(string),
+				ScoreMapping:          toStructRuleScoreMapping(d.Get("score_mapping")),
+				Stream:                d.Get("stream").(string),
+				SummaryExpression:     d.Get("summary_expression").(string),
+				Tags:                  toStringSlice(d.Get("tags")),
+				TuningExpressionIds:   toStringSlice(d.Get("tuning_expression_ids")),
 			},
 		})
 		if err != nil {
@@ -276,5 +314,5 @@ func resourceMatchRuleUpdate(ctx context.Context, d *schema.ResourceData, m inte
 		}
 	}
 
-	return resourceMatchRuleRead(ctx, d, m)
+	return resourceTemplatedRuleRead(ctx, d, m)
 }

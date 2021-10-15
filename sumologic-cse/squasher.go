@@ -69,7 +69,6 @@ func flattenData(data interface{}) ([]map[string]interface{}, error) {
 	case RuleScoreMapping:
 		var input = map[string]interface{}{
 			"default": d.Default,
-			"field":   d.Field,
 			"type":    d.Type,
 		}
 		flattenData = append(flattenData, input)
@@ -88,8 +87,19 @@ func flattenData(data interface{}) ([]map[string]interface{}, error) {
 			flattenData = append(flattenData, user)
 		}
 	default:
-		return nil, errors.New("type not expected by squasher")
+		return nil, errors.New("flattenData: type not expected")
 	}
 
 	return flattenData, nil
+}
+
+func toStringSlice(data interface{}) []string {
+	datum := data.([]interface{})
+
+	ss := make([]string, len(datum))
+	for i, v := range datum {
+		ss[i] = v.(string)
+	}
+
+	return ss
 }

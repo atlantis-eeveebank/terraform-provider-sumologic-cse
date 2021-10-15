@@ -6,6 +6,38 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+type AggregationRuleRequest struct {
+	Fields AggregationRulePayload `json:"fields"`
+}
+
+type AggregationRulePayload struct {
+	AggregationFunctions  []RuleAggregationFunction `json:"aggregationFunctions"`
+	AssetField            string                    `json:"assetField"`
+	Category              string                    `json:"category"`
+	DescriptionExpression string                    `json:"descriptionExpression"`
+	Enabled               bool                      `json:"enabled"`
+	EntitySelectors       []RuleEntitySelector      `json:"entitySelectors"`
+	GroupByAsset          bool                      `json:"groupByAsset"`
+	GroupByFields         []string                  `json:"groupByFields"`
+	IsPrototype           bool                      `json:"isPrototype"`
+	MatchExpression       string                    `json:"matchExpression"`
+	Name                  string                    `json:"name"`
+	NameExpression        string                    `json:"nameExpression"`
+	ScoreMapping          RuleScoreMapping          `json:"scoreMapping"`
+	Stream                string                    `json:"stream"`
+	SummaryExpression     string                    `json:"summaryExpression"`
+	Tags                  []string                  `json:"tags"`
+	TriggerExpression     string                    `json:"triggerExpression"`
+	TuningExpressionIds   []string                  `json:"tuningExpressionIds"`
+	WindowSize            string                    `json:"windowSize"`
+}
+
+type RuleAggregationFunction struct {
+	Arguments []string `json:"arguments"`
+	Function  string   `json:"function"`
+	Name      string   `json:"name"`
+}
+
 func resourceAggregationRule() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceAggregationRuleCreate,
@@ -73,7 +105,7 @@ func resourceAggregationRule() *schema.Resource {
 				Required: true,
 			},
 			"window_size": &schema.Schema{
-				Type:     schema.TypeInt,
+				Type:     schema.TypeString,
 				Optional: true,
 			},
 			"group_by_fields": &schema.Schema{
@@ -153,25 +185,25 @@ func resourceAggregationRule() *schema.Resource {
 }
 
 func aggregationRuleHasChanges(d resourceDiffer) bool {
-	return d.HasChange("group_by_asset") ||
-		d.HasChange("is_prototype") ||
+	return d.HasChange("aggregation_function") ||
 		d.HasChange("asset_field") ||
 		d.HasChange("category") ||
 		d.HasChange("description_expression") ||
+		d.HasChange("entity_selector") ||
+		d.HasChange("group_by_fields") ||
+		d.HasChange("is_prototype") ||
 		d.HasChange("match_expression") ||
 		d.HasChange("name") ||
 		d.HasChange("name_expression") ||
 		d.HasChange("parent_jask_id") ||
+		d.HasChange("score_mapping") ||
 		d.HasChange("stream") ||
 		d.HasChange("summary_expression") ||
-		d.HasChange("trigger_expression") ||
-		d.HasChange("window_size") ||
-		d.HasChange("group_by_fields") ||
 		d.HasChange("tags") ||
+		d.HasChange("trigger_expression") ||
 		d.HasChange("tuning_expression_ids") ||
-		d.HasChange("aggregation_function") ||
-		d.HasChange("entity_selector") ||
-		d.HasChange("score_mapping")
+		d.HasChange("window_size") ||
+		d.HasChange("group_by_asset")
 }
 
 func resourceAggregationRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -179,28 +211,27 @@ func resourceAggregationRuleCreate(ctx context.Context, d *schema.ResourceData, 
 
 	c := m.(*Client)
 
-	id, err := c.Create(RuleRequest{
-		Fields: RulePayload{
-			AggregationFunctions: d.Get("aggregation_function").([]RuleAggregationFunction),
-			AssetField: d.Get("asset_field").(string),
-			Category: d.Get("category").(string),
+	id, err := c.Create(AggregationRuleRequest{
+		Fields: AggregationRulePayload{
+			AggregationFunctions:  toAggregationFunctionSlice(d.Get("aggregation_function")),
+			AssetField:            d.Get("asset_field").(string),
+			Category:              d.Get("category").(string),
 			DescriptionExpression: d.Get("description_expression").(string),
-			Enabled: d.Get("enabled").(bool),
-			EntitySelectors: d.Get("entity_selector").([]RuleEntitySelector),
-			GroupByAsset: d.Get("group_by_asset").(bool),
-			GroupByFields: d.Get("group_by_fields").([]string),
-			IsPrototype: d.Get("is_prototype").(bool),
-			MatchExpression: d.Get("match_expression").(string),
-			Name: d.Get("name").(string),
-			NameExpression: d.Get("name_expression").(string),
-			ParentJaskId: d.Get("parent_jask_id").(string),
-			ScoreMapping: d.Get("score_mapping").(RuleScoreMapping),
-			Stream: d.Get("stream").(string),
-			SummaryExpression: d.Get("summary_expression").(string),
-			Tags: d.Get("tags").([]string),
-			TriggerExpression: d.Get("tuning_expression_ids").(string),
-			TuningExpressionIds: d.Get("tags").([]string),
-			WindowSize: d.Get("window_size").(string),
+			Enabled:               d.Get("enabled").(bool),
+			EntitySelectors:       toEntitySelectorSlice(d.Get("entity_selector")),
+			GroupByAsset:          d.Get("group_by_asset").(bool),
+			GroupByFields:         toStringSlice(d.Get("group_by_fields")),
+			IsPrototype:           d.Get("is_prototype").(bool),
+			MatchExpression:       d.Get("match_expression").(string),
+			Name:                  d.Get("name").(string),
+			NameExpression:        d.Get("name_expression").(string),
+			ScoreMapping:          toStructRuleScoreMapping(d.Get("score_mapping")),
+			Stream:                d.Get("stream").(string),
+			SummaryExpression:     d.Get("summary_expression").(string),
+			Tags:                  toStringSlice(d.Get("tags")),
+			TriggerExpression:     d.Get("trigger_expression").(string),
+			TuningExpressionIds:   toStringSlice(d.Get("tuning_expression_ids")),
+			WindowSize:            d.Get("window_size").(string),
 		},
 	})
 	if err != nil {
@@ -342,27 +373,26 @@ func resourceAggregationRuleUpdate(ctx context.Context, d *schema.ResourceData, 
 	c := m.(*Client)
 
 	if aggregationRuleHasChanges(d) {
-		err := c.Update(d.Id(), RuleRequest{
-			Fields: RulePayload{
-				AggregationFunctions: d.Get("aggregation_function").([]RuleAggregationFunction),
-				AssetField: d.Get("asset_field").(string),
-				Category: d.Get("category").(string),
+		err := c.Update(d.Id(), AggregationRuleRequest{
+			Fields: AggregationRulePayload{
+				AggregationFunctions:  toAggregationFunctionSlice(d.Get("aggregation_function")),
+				AssetField:            d.Get("asset_field").(string),
+				Category:              d.Get("category").(string),
 				DescriptionExpression: d.Get("description_expression").(string),
-				EntitySelectors: d.Get("entity_selector").([]RuleEntitySelector),
-				GroupByAsset: d.Get("group_by_asset").(bool),
-				GroupByFields: d.Get("group_by_fields").([]string),
-				IsPrototype: d.Get("is_prototype").(bool),
-				MatchExpression: d.Get("match_expression").(string),
-				Name: d.Get("name").(string),
-				NameExpression: d.Get("name_expression").(string),
-				ParentJaskId: d.Get("parent_jask_id").(string),
-				ScoreMapping: d.Get("score_mapping").(RuleScoreMapping),
-				Stream: d.Get("stream").(string),
-				SummaryExpression: d.Get("summary_expression").(string),
-				Tags: d.Get("tags").([]string),
-				TriggerExpression: d.Get("tuning_expression_ids").(string),
-				TuningExpressionIds: d.Get("tags").([]string),
-				WindowSize: d.Get("window_size").(string),
+				EntitySelectors:       toEntitySelectorSlice(d.Get("entity_selector")),
+				GroupByAsset:          d.Get("group_by_asset").(bool),
+				GroupByFields:         toStringSlice(d.Get("group_by_fields")),
+				IsPrototype:           d.Get("is_prototype").(bool),
+				MatchExpression:       d.Get("match_expression").(string),
+				Name:                  d.Get("name").(string),
+				NameExpression:        d.Get("name_expression").(string),
+				ScoreMapping:          toStructRuleScoreMapping(d.Get("score_mapping")),
+				Stream:                d.Get("stream").(string),
+				SummaryExpression:     d.Get("summary_expression").(string),
+				Tags:                  toStringSlice(d.Get("tags")),
+				TriggerExpression:     d.Get("trigger_expression").(string),
+				TuningExpressionIds:   toStringSlice(d.Get("tuning_expression_ids")),
+				WindowSize:            d.Get("window_size").(string),
 			},
 		})
 		if err != nil {

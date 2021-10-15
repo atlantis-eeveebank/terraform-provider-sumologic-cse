@@ -10,88 +10,46 @@ type RuleResponse struct {
 	Rule Rule `json:"data"`
 }
 
-type RuleRequest struct {
-	Fields RulePayload `json:"fields"`
-}
-
 type Rule struct {
-	Deleted               bool     `json:"deleted"`
-	Enabled               bool     `json:"enabled"`
-	HasOverride           bool     `json:"hasOverride"`
-	IsPrototype           bool     `json:"isPrototype"`
-	GroupByAsset          bool     `json:"groupByAsset"`
-	CountDistinct         bool     `json:"countDistinct"`
-	AssetField            string   `json:"assetField"`
-	Category              string   `json:"category"`
-	ContentType           string   `json:"contentType"`
-	CountField            string   `json:"countField"`
-	CreatedBy             string   `json:"createdBy"`
-	Description           string   `json:"description"`
-	DescriptionExpression string   `json:"descriptionExpression"`
-	Expression            string   `json:"expression"`
-	Id                    string   `json:"id"`
-	LastUpdatedBy         string   `json:"lastUpdatedBy"`
-	MatchExpression       string   `json:"matchExpression"`
-	Name                  string   `json:"name"`
-	NameExpression        string   `json:"nameExpression"`
-	ParentJaskId          string   `json:"parentJaskId"`
-	RuleSource            string   `json:"ruleSource"`
-	RuleType              string   `json:"ruleType"`
-	Stream                string   `json:"stream"`
-	SummaryExpression     string   `json:"summaryExpression"`
-	TriggerExpression     string   `json:"triggerExpression"`
-	RuleId                int      `json:"ruleId"`
-	Limit                 int      `json:"limit"`
-	Score                 int      `json:"score"`
-	SignalCount07D        int      `json:"signalCount07d"`
-	SignalCount24H        int      `json:"signalCount24h"`
-	WindowSize            int      `json:"windowSize"`
-	Version               int      `json:"version"`
-	GroupByFields         []string `json:"groupByFields"`
-	Tags                  []string `json:"tags"`
-	TuningExpressionIds   []string `json:"tuningExpressionIds"`
-
-	AggregationFunctions []RuleAggregationFunction `json:"aggregationFunctions"`
-	EntitySelectors      []RuleEntitySelector      `json:"entitySelectors"`
-	ScoreMapping         RuleScoreMapping          `json:"scoreMapping"`
-	Status               RuleStatus                `json:"status"`
-}
-
-type RulePayload struct {
-	Enabled               bool     `json:"enabled"`
-	GroupByAsset          bool     `json:"groupByAsset"`
-	CountDistinct         bool     `json:"countDistinct"`
-	IsPrototype           bool     `json:"isPrototype"`
-	AssetField            string   `json:"assetField"`
-	Category              string   `json:"category"`
-	CountField            string   `json:"countField"`
-	Description           string   `json:"description"`
-	DescriptionExpression string   `json:"descriptionExpression"`
-	MatchExpression       string   `json:"matchExpression"`
-	Expression            string   `json:"expression"`
-	Name                  string   `json:"name"`
-	NameExpression        string   `json:"nameExpression"`
-	ParentJaskId          string   `json:"parentJaskId"`
-	Stream                string   `json:"stream"`
-	SummaryExpression     string   `json:"summaryExpression"`
-	TriggerExpression     string   `json:"triggerExpression"`
-	WindowSize            string   `json:"windowSize"`
-	Limit                 int      `json:"limit"`
-	Score                 int      `json:"score"`
-	Version               int      `json:"version"`
-	GroupByFields         []string `json:"groupByFields"`
-	Tags                  []string `json:"tags"`
-	TuningExpressionIds   []string `json:"tuningExpressionIds"`
-
-	AggregationFunctions []RuleAggregationFunction `json:"aggregationFunctions"`
-	EntitySelectors      []RuleEntitySelector      `json:"entitySelectors"`
-	ScoreMapping         RuleScoreMapping          `json:"scoreMapping"`
-}
-
-type RuleAggregationFunction struct {
-	Arguments []string `json:"arguments"`
-	Function  string   `json:"function"`
-	Name      string   `json:"name"`
+	AggregationFunctions  []RuleAggregationFunction `json:"aggregationFunctions"`
+	AssetField            string                    `json:"assetField"`
+	Category              string                    `json:"category"`
+	ContentType           string                    `json:"contentType"`
+	CountDistinct         bool                      `json:"countDistinct"`
+	CountField            string                    `json:"countField"`
+	CreatedBy             string                    `json:"createdBy"`
+	Deleted               bool                      `json:"deleted"`
+	Description           string                    `json:"description"`
+	DescriptionExpression string                    `json:"descriptionExpression"`
+	Enabled               bool                      `json:"enabled"`
+	EntitySelectors       []RuleEntitySelector      `json:"entitySelectors"`
+	Expression            string                    `json:"expression"`
+	GroupByAsset          bool                      `json:"groupByAsset"`
+	GroupByFields         []string                  `json:"groupByFields"`
+	HasOverride           bool                      `json:"hasOverride"`
+	Id                    string                    `json:"id"`
+	IsPrototype           bool                      `json:"isPrototype"`
+	LastUpdatedBy         string                    `json:"lastUpdatedBy"`
+	Limit                 int                       `json:"limit"`
+	MatchExpression       string                    `json:"matchExpression"`
+	Name                  string                    `json:"name"`
+	NameExpression        string                    `json:"nameExpression"`
+	ParentJaskId          string                    `json:"parentJaskId"`
+	RuleId                int                       `json:"ruleId"`
+	RuleSource            string                    `json:"ruleSource"`
+	RuleType              string                    `json:"ruleType"`
+	Score                 int                       `json:"score"`
+	ScoreMapping          RuleScoreMapping          `json:"scoreMapping"`
+	SignalCount07D        int                       `json:"signalCount07d"`
+	SignalCount24H        int                       `json:"signalCount24h"`
+	Status                RuleStatus                `json:"status"`
+	Stream                string                    `json:"stream"`
+	SummaryExpression     string                    `json:"summaryExpression"`
+	Tags                  []string                  `json:"tags"`
+	TriggerExpression     string                    `json:"triggerExpression"`
+	TuningExpressionIds   []string                  `json:"tuningExpressionIds"`
+	Version               int                       `json:"version"`
+	WindowSize            string                    `json:"windowSizeName"`
 }
 
 type RuleEntitySelector struct {
@@ -101,13 +59,54 @@ type RuleEntitySelector struct {
 
 type RuleScoreMapping struct {
 	Default int    `json:"default"`
-	Field   string `json:"field"`
 	Type    string `json:"type"`
 }
 
 type RuleStatus struct {
 	Message interface{} `json:"message"`
 	Status  string      `json:"status"`
+}
+
+func toAggregationFunctionSlice(data interface{}) []RuleAggregationFunction {
+	datum := data.([]interface{})
+
+	aggregationFunctions := make([]RuleAggregationFunction, len(datum))
+	for i, v := range datum {
+		af := v.(map[string]interface{})
+
+		aggregationFunctions[i] = RuleAggregationFunction{
+			Arguments: toStringSlice(af["arguments"]),
+			Function:  af["function"].(string),
+			Name:      af["name"].(string),
+		}
+	}
+
+	return aggregationFunctions
+}
+
+func toEntitySelectorSlice(data interface{}) []RuleEntitySelector {
+	datum := data.([]interface{})
+
+	entitySelectors := make([]RuleEntitySelector, len(datum))
+	for i, v := range datum {
+		es := v.(map[string]interface{})
+
+		entitySelectors[i] = RuleEntitySelector{
+			EntityType: es["entity_type"].(string),
+			Expression: es["expression"].(string),
+		}
+	}
+
+	return entitySelectors
+}
+
+func toStructRuleScoreMapping(data interface{}) RuleScoreMapping {
+	datum := data.([]interface{})[0].(map[string]interface{})
+
+	return RuleScoreMapping{
+		Default: datum["default"].(int),
+		Type:    datum["type"].(string),
+	}
 }
 
 func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

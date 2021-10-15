@@ -108,7 +108,7 @@ func (c *Client) ReadAll(objectType string) (interface{}, error) {
 		}
 		return data, nil
 	default:
-		return nil, errors.New("type not expected")
+		return nil, errors.New("ReadAll: type not expected")
 	}
 }
 
@@ -142,14 +142,26 @@ func (c *Client) Create(data interface{}) (string, error) {
 		if err != nil {
 			return "", err
 		}
-	case RuleRequest:
-		objectType = "rules"
-		payload, err = json.Marshal(data.(RuleRequest))
+	case AggregationRuleRequest:
+		objectType = "rules/aggregation"
+		payload, err = json.Marshal(data.(AggregationRuleRequest))
+		if err != nil {
+			return "", err
+		}
+	case TemplatedRuleRequest:
+		objectType = "rules/templated"
+		payload, err = json.Marshal(data.(TemplatedRuleRequest))
+		if err != nil {
+			return "", err
+		}
+	case ThresholdRuleRequest:
+		objectType = "rules/threshold"
+		payload, err = json.Marshal(data.(ThresholdRuleRequest))
 		if err != nil {
 			return "", err
 		}
 	default:
-		return "", errors.New("type not expected")
+		return "", errors.New("create: type not expected")
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/%s", c.HostURL, objectType), bytes.NewBuffer(payload))
@@ -176,11 +188,15 @@ func (c *Client) Create(data interface{}) (string, error) {
 		return data.(NetworkBlockResponse).NetworkBlock.Id, nil
 	case RoleRequest:
 		return data.(RoleResponse).Role.Id, nil
-	case RuleRequest:
+	case AggregationRuleRequest:
+		return data.(RuleResponse).Rule.Id, nil
+	case TemplatedRuleRequest:
+		return data.(RuleResponse).Rule.Id, nil
+	case ThresholdRuleRequest:
 		return data.(RuleResponse).Rule.Id, nil
 	}
 
-	return "", errors.New("type not expected")
+	return "", errors.New("create (2): type not expected")
 }
 
 func (c *Client) Read(objectType string, id string) (interface{}, error) {
@@ -232,7 +248,7 @@ func (c *Client) Read(objectType string, id string) (interface{}, error) {
 		}
 		return data, nil
 	default:
-		return nil, errors.New("type not expected")
+		return nil, errors.New("read: type not expected")
 	}
 }
 
@@ -272,14 +288,26 @@ func (c *Client) Update(id string, data interface{}) error {
 		if err != nil {
 			return err
 		}
-	case RuleRequest:
-		objectType = "rules"
-		payload, err = json.Marshal(data.(RuleRequest))
+	case AggregationRuleRequest:
+		objectType = "rules/aggregation"
+		payload, err = json.Marshal(data.(AggregationRuleRequest))
+		if err != nil {
+			return err
+		}
+	case TemplatedRuleRequest:
+		objectType = "rules/templated"
+		payload, err = json.Marshal(data.(TemplatedRuleRequest))
+		if err != nil {
+			return err
+		}
+	case ThresholdRuleRequest:
+		objectType = "rules/threshold"
+		payload, err = json.Marshal(data.(ThresholdRuleRequest))
 		if err != nil {
 			return err
 		}
 	default:
-		return errors.New("type not expected")
+		return errors.New("update: type not expected")
 	}
 
 	req, err := http.NewRequest("PUT", fmt.Sprintf("%s/%s/%s", c.HostURL, objectType, id), bytes.NewBuffer(payload))
@@ -328,7 +356,21 @@ func (c *Client) Update(id string, data interface{}) error {
 			return err
 		}
 		return nil
-	case RuleRequest:
+	case AggregationRuleRequest:
+		var data RuleResponse
+		err = json.Unmarshal(body, &data)
+		if err != nil {
+			return err
+		}
+		return nil
+	case TemplatedRuleRequest:
+		var data RuleResponse
+		err = json.Unmarshal(body, &data)
+		if err != nil {
+			return err
+		}
+		return nil
+	case ThresholdRuleRequest:
 		var data RuleResponse
 		err = json.Unmarshal(body, &data)
 		if err != nil {
@@ -336,7 +378,7 @@ func (c *Client) Update(id string, data interface{}) error {
 		}
 		return nil
 	default:
-		return errors.New("type not expected")
+		return errors.New("update (2): type not expected")
 	}
 }
 
