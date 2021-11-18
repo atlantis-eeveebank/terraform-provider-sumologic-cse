@@ -114,7 +114,7 @@ func resourceRuleDelete(ctx context.Context, d *schema.ResourceData, m interface
 
 	c := m.(*Client)
 
-	err := c.Delete(d.Id(), "rules")
+	err := c.Delete(d.Id(), Rules)
 	if err != nil {
 		return diag.FromErr(err)
 	}

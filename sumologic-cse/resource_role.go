@@ -83,7 +83,7 @@ func resourceRoleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 
 	c := m.(*Client)
 
-	role, err := c.Read("roles", d.Id())
+	role, err := c.Read(Roles, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -134,7 +134,7 @@ func resourceRoleDelete(ctx context.Context, d *schema.ResourceData, m interface
 
 	c := m.(*Client)
 
-	err := c.Delete(d.Id(), "roles")
+	err := c.Delete(d.Id(), Roles)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -245,7 +245,7 @@ func resourceLogMappingRead(ctx context.Context, d *schema.ResourceData, m inter
 
 	c := m.(*Client)
 
-	lmD, err := c.Read("log-mappings", d.Id())
+	lmD, err := c.Read(LogMappings, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -336,7 +336,7 @@ func resourceLogMappingDelete(ctx context.Context, d *schema.ResourceData, m int
 
 	c := m.(*Client)
 
-	err := c.Delete(d.Id(), "log-mappings")
+	err := c.Delete(d.Id(), LogMappings)
 	if err != nil {
 		return diag.FromErr(err)
 	}

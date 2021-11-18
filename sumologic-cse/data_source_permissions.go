@@ -47,7 +47,7 @@ func dataSourcePermissionRead(ctx context.Context, d *schema.ResourceData, m int
 	var diags diag.Diagnostics
 
 	c := m.(*Client)
-	result, err := c.ReadAll("permissions")
+	result, err := c.ReadAll(Permissions)
 	if err != nil {
 		return diag.FromErr(err)
 	}

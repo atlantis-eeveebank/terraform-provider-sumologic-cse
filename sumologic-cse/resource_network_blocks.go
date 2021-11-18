@@ -90,7 +90,7 @@ func resourceNetworkBlockRead(ctx context.Context, d *schema.ResourceData, m int
 
 	c := m.(*Client)
 
-	cetD, err := c.Read("network-blocks", d.Id())
+	cetD, err := c.Read(NetworkBlocks, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -138,7 +138,7 @@ func resourceNetworkBlockDelete(ctx context.Context, d *schema.ResourceData, m i
 
 	c := m.(*Client)
 
-	err := c.Delete(d.Id(), "network-blocks")
+	err := c.Delete(d.Id(), NetworkBlocks)
 	if err != nil {
 		return diag.FromErr(err)
 	}

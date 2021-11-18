@@ -63,7 +63,7 @@ func resourceCustomEntityTypeCreate(ctx context.Context, d *schema.ResourceData,
 
 	c := m.(*Client)
 
-	setFields := d.Get("Fields").([]interface{})
+	setFields := d.Get("Items").([]interface{})
 	fields := make([]string, len(setFields))
 	for _, field := range setFields {
 		fields = append(fields, field.(string))
@@ -91,7 +91,7 @@ func resourceCustomEntityTypeRead(ctx context.Context, d *schema.ResourceData, m
 
 	c := m.(*Client)
 
-	data, err := c.Read("custom-entity-types", d.Id())
+	data, err := c.Read(CustomEntityTypes, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -118,7 +118,7 @@ func resourceCustomEntityTypeUpdate(ctx context.Context, d *schema.ResourceData,
 	if d.HasChanges("name", "fields") {
 		c := m.(*Client)
 
-		setFields := d.Get("Fields").([]interface{})
+		setFields := d.Get("Items").([]interface{})
 		fields := make([]string, len(setFields))
 		for _, field := range setFields {
 			fields = append(fields, field.(string))
@@ -143,7 +143,7 @@ func resourceCustomEntityTypeDelete(ctx context.Context, d *schema.ResourceData,
 
 	c := m.(*Client)
 
-	err := c.Delete(d.Id(), "custom-entity-types")
+	err := c.Delete(d.Id(), CustomEntityTypes)
 	if err != nil {
 		return diag.FromErr(err)
 	}

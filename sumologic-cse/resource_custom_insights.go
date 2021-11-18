@@ -145,7 +145,7 @@ func resourceCustomInsightRead(ctx context.Context, d *schema.ResourceData, m in
 
 	c := m.(*Client)
 
-	result, err := c.ReadAll("custom-insights")
+	result, err := c.ReadAll(CustomInsights)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -241,7 +241,7 @@ func resourceCustomInsightDelete(ctx context.Context, d *schema.ResourceData, m 
 
 	c := m.(*Client)
 
-	err := c.Delete(d.Id(), "custom-insights")
+	err := c.Delete(d.Id(), CustomInsights)
 	if err != nil {
 		return diag.FromErr(err)
 	}

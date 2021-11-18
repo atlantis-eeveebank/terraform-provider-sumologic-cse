@@ -87,7 +87,7 @@ func flattenData(data interface{}) ([]map[string]interface{}, error) {
 			flattenData = append(flattenData, user)
 		}
 	default:
-		return nil, errors.New("flattenData: type not expected")
+		return nil, errors.New("type not expected when attempting to flatten data")
 	}
 
 	return flattenData, nil

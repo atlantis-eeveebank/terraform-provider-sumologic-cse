@@ -79,7 +79,7 @@ func dataSourceUsersRead(ctx context.Context, d *schema.ResourceData, m interfac
 	var diags diag.Diagnostics
 
 	c := m.(*Client)
-	result, err := c.ReadAll("users")
+	result, err := c.ReadAll(Users)
 	if err != nil {
 		return diag.FromErr(err)
 	}
