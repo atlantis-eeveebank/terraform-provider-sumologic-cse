@@ -236,6 +236,7 @@ func resourceTemplatedRuleUpdate(ctx context.Context, d *schema.ResourceData, m 
 				Name:                  d.Get("name").(string),
 				NameExpression:        d.Get("name_expression").(string),
 				ScoreMapping:          toStructRuleScoreMapping(d.Get("severity_mapping")),
+				Stream:                "record",
 				SummaryExpression:     d.Get("summary_expression").(string),
 				Tags:                  toStringSlice(d.Get("tags")),
 			},

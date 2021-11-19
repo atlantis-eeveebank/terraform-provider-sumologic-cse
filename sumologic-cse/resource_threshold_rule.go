@@ -275,6 +275,7 @@ func resourceThresholdRuleUpdate(ctx context.Context, d *schema.ResourceData, m 
 				Limit:             d.Get("limit").(int),
 				Name:              d.Get("name").(string),
 				Score:             d.Get("severity").(int),
+				Stream:            "record",
 				SummaryExpression: d.Get("summary_expression").(string),
 				Tags:              toStringSlice(d.Get("tags")),
 				WindowSize:        d.Get("window_size").(string),
