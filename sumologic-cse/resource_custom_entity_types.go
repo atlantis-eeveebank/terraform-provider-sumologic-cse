@@ -63,7 +63,7 @@ func resourceCustomEntityTypeCreate(ctx context.Context, d *schema.ResourceData,
 
 	c := m.(*Client)
 
-	setFields := d.Get("Items").([]interface{})
+	setFields := d.Get("fields").([]interface{})
 	fields := make([]string, len(setFields))
 	for _, field := range setFields {
 		fields = append(fields, field.(string))
