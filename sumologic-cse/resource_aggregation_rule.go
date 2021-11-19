@@ -102,7 +102,7 @@ func resourceAggregationRule() *schema.Resource {
 				Required: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"aggregation_function": &schema.Schema{
+			"aggregation_functions": &schema.Schema{
 				Type:     schema.TypeList,
 				Required: true,
 				Elem: &schema.Resource{
@@ -160,7 +160,7 @@ func resourceAggregationRule() *schema.Resource {
 }
 
 func aggregationRuleHasChanges(d resourceDiffer) bool {
-	return d.HasChange("aggregation_function") ||
+	return d.HasChange("aggregation_functions") ||
 		d.HasChange("description_expression") ||
 		d.HasChange("entity_selectors") ||
 		d.HasChange("group_by_entity") ||
@@ -183,7 +183,7 @@ func resourceAggregationRuleCreate(ctx context.Context, d *schema.ResourceData, 
 
 	id, err := c.Create(AggregationRuleRequest{
 		Fields: AggregationRulePayload{
-			AggregationFunctions:  toAggregationFunctionSlice(d.Get("aggregation_function")),
+			AggregationFunctions:  toAggregationFunctionSlice(d.Get("aggregation_functions")),
 			DescriptionExpression: d.Get("description_expression").(string),
 			Enabled:               d.Get("enabled").(bool),
 			EntitySelectors:       toEntitySelectorSlice(d.Get("entity_selectors")),
@@ -285,7 +285,7 @@ func resourceAggregationRuleRead(ctx context.Context, d *schema.ResourceData, m 
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = d.Set("aggregation_function", af)
+	err = d.Set("aggregation_functions", af)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -317,7 +317,7 @@ func resourceAggregationRuleUpdate(ctx context.Context, d *schema.ResourceData, 
 	if aggregationRuleHasChanges(d) {
 		err := c.Update(d.Id(), AggregationRuleRequest{
 			Fields: AggregationRulePayload{
-				AggregationFunctions:  toAggregationFunctionSlice(d.Get("aggregation_function")),
+				AggregationFunctions:  toAggregationFunctionSlice(d.Get("aggregation_functions")),
 				DescriptionExpression: d.Get("description_expression").(string),
 				EntitySelectors:       toEntitySelectorSlice(d.Get("entity_selectors")),
 				GroupByAsset:          d.Get("group_by_entity").(bool),
