@@ -10,6 +10,24 @@ type resourceDiffer interface {
 	HasChange(string) bool
 }
 
+type LogMappingSearchResponse struct {
+	Data struct {
+		Objects []struct {
+			Enabled          bool                        `json:"enabled"`
+			Fields           []LogMappingField           `json:"fields"`
+			Id               string                      `json:"id"`
+			Name             string                      `json:"name"`
+			ProductGuid      string                      `json:"productGuid"`
+			RecordType       string                      `json:"recordType"`
+			RelatesEntities  bool                        `json:"relatesEntities"`
+			SkippedValues    []string                    `json:"skippedValues"`
+			Source           string                      `json:"source"`
+			StructuredInputs []LogMappingStructuredInput `json:"structuredInputs"`
+		} `json:"objects"`
+		Total int `json:"total"`
+	} `json:"data"`
+}
+
 type LogMappingResponse struct {
 	LogMapping LogMapping `json:"data"`
 }
@@ -110,10 +128,6 @@ func resourceLogMapping() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
-			"source": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-			},
 			"skipped_values": &schema.Schema{
 				Type:     schema.TypeList,
 				Optional: true,
@@ -143,7 +157,7 @@ func resourceLogMapping() *schema.Resource {
 					},
 				},
 			},
-			"field": &schema.Schema{
+			"fields": &schema.Schema{
 				Type:     schema.TypeList,
 				Required: true,
 				Elem: &schema.Resource{
@@ -206,8 +220,7 @@ func logMappingHasChanges(d resourceDiffer) bool {
 		d.HasChange("product_guid") ||
 		d.HasChange("record_type") ||
 		d.HasChange("relates_entities") ||
-		d.HasChange("source") ||
-		d.HasChange("field") ||
+		d.HasChange("fields") ||
 		d.HasChange("skipped_values") ||
 		d.HasChange("structured_input")
 }
@@ -217,6 +230,58 @@ func resourceLogMappingCreate(ctx context.Context, d *schema.ResourceData, m int
 
 	c := m.(*Client)
 
+	setSkippedValues := d.Get("skipped_values").([]interface{})
+	skippedValues := make([]string, len(setSkippedValues))
+	for _, skippedValue := range setSkippedValues {
+		skippedValues = append(skippedValues, skippedValue.(string))
+	}
+
+	setFields := d.Get("fields").([]interface{})
+	fields := make([]LogMappingField, len(setFields))
+	for _, field := range setFields {
+		fieldMap := field.(map[string]interface{})
+
+		avs := fieldMap["alternate_values"].([]interface{})
+		alternateValues := make([]string, len(avs))
+		for _, av := range avs {
+			alternateValues = append(alternateValues, av.(string))
+		}
+
+		lus := fieldMap["lookup"].([]interface{})
+		lookups := make([]LogMappingFieldLookup, len(lus))
+		for _, lu := range lus {
+			lookupMap := lu.(map[string]interface{})
+			lookups = append(lookups, LogMappingFieldLookup{
+				Key:   lookupMap["key"].(string),
+				Value: lookupMap["value"].(string),
+			})
+		}
+
+		fields = append(fields, LogMappingField{
+			AlternateValues: alternateValues,
+			CaseInsensitive: fieldMap["case_insensitive"].(bool),
+			DefaultValue:    fieldMap["default_value"].(string),
+			Format:          fieldMap["format"].(string),
+			Lookup:          lookups,
+			Name:            fieldMap["name"].(string),
+			Value:           fieldMap["value"].(string),
+			ValueType:       fieldMap["value_type"].(string),
+		})
+	}
+
+	setStructuredInputs := d.Get("StructuredInputs").([]interface{})
+	structuredInputs := make([]LogMappingStructuredInput, len(setStructuredInputs))
+	for _, structuredInput := range setStructuredInputs {
+		structuredInputMap := structuredInput.(map[string]interface{})
+
+		structuredInputs = append(structuredInputs, LogMappingStructuredInput{
+			EventIdPattern: structuredInputMap["event_id_pattern"].(string),
+			LogFormat:      structuredInputMap["log_format"].(string),
+			Product:        structuredInputMap["product"].(string),
+			Vendor:         structuredInputMap["vendor"].(string),
+		})
+	}
+
 	id, err := c.Create(LogMappingRequest{
 		Fields: PostLogMappingPayload{
 			Enabled:          d.Get("enabled").(bool),
@@ -224,10 +289,9 @@ func resourceLogMappingCreate(ctx context.Context, d *schema.ResourceData, m int
 			ProductGuid:      d.Get("product_guid").(string),
 			RecordType:       d.Get("record_type").(string),
 			RelatesEntities:  d.Get("relates_entities").(bool),
-			Source:           d.Get("source").(string),
-			SkippedValues:    d.Get("skipped_values").([]string),
+			SkippedValues:    skippedValues,
 			StructuredInputs: d.Get("structured_input").([]LogMappingStructuredInput),
-			Fields:           d.Get("field").([]LogMappingField),
+			Fields:           fields,
 		},
 	})
 	if err != nil {
@@ -275,11 +339,6 @@ func resourceLogMappingRead(ctx context.Context, d *schema.ResourceData, m inter
 		return diag.FromErr(err)
 	}
 
-	err = d.Set("source", lmD.(LogMappingResponse).LogMapping.Source)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
 	err = d.Set("skipped_values", lmD.(LogMappingResponse).LogMapping.SkippedValues)
 	if err != nil {
 		return diag.FromErr(err)
@@ -298,7 +357,7 @@ func resourceLogMappingRead(ctx context.Context, d *schema.ResourceData, m inter
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	err = d.Set("field", fields)
+	err = d.Set("fields", fields)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -317,10 +376,9 @@ func resourceLogMappingUpdate(ctx context.Context, d *schema.ResourceData, m int
 				ProductGuid:      d.Get("product_guid").(string),
 				RecordType:       d.Get("record_type").(string),
 				RelatesEntities:  d.Get("relates_entities").(bool),
-				Source:           d.Get("source").(string),
 				SkippedValues:    d.Get("skipped_values").([]string),
 				StructuredInputs: d.Get("structured_input").([]LogMappingStructuredInput),
-				Fields:           d.Get("field").([]LogMappingField),
+				Fields:           d.Get("fields").([]LogMappingField),
 			},
 		})
 		if err != nil {

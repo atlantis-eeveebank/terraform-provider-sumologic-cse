@@ -296,7 +296,7 @@ func (c *Client) Create(data interface{}) (string, error) {
 	return "", errors.New("type not expected when processing creation response")
 }
 
-func (c *Client) Read(objectType string, id string) (interface{}, error) {
+func (c *Client) Read(objectType, id string) (interface{}, error) {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s/%s", c.HostURL, objectType, id), nil)
 
 	if err != nil {
@@ -360,6 +360,34 @@ func (c *Client) Read(objectType string, id string) (interface{}, error) {
 		return data, nil
 	default:
 		return nil, errors.New(fmt.Sprintf("type not expected when reading for object %s", objectType))
+	}
+}
+
+func (c *Client) Search(objectType, queryString string) (interface{}, error) {
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/%s", c.HostURL, objectType), nil)
+	if err != nil {
+		return "", err
+	}
+
+	q := req.URL.Query()
+	q.Add("q", queryString)
+	req.URL.RawQuery = q.Encode()
+
+	body, err := c.doRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	switch objectType {
+	case LogMappings:
+		var data LogMappingSearchResponse
+		err = json.Unmarshal(body, &data)
+		if err != nil {
+			return data, err
+		}
+		return data, nil
+	default:
+		return nil, errors.New(fmt.Sprintf("type not expected when searching for object %s", objectType))
 	}
 }
 

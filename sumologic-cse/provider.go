@@ -22,6 +22,7 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
+			"sumologiccse_log_mapping": dataSourceLogMapping(),
 			"sumologiccse_permissions": dataSourcePermissions(),
 			"sumologiccse_users":       dataSourceUsers(),
 		},
