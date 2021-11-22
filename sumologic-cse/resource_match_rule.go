@@ -122,12 +122,8 @@ func templatedRuleHasChanges(d resourceDiffer) bool {
 		d.HasChange("tags")
 }
 
-func resourceTemplatedRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	c := m.(*Client)
-
-	id, err := c.Create(TemplatedRuleRequest{
+func templatedRulePayload(d *schema.ResourceData) TemplatedRuleRequest {
+	return TemplatedRuleRequest{
 		Fields: TemplatedRulePayload{
 			DescriptionExpression: d.Get("description_expression").(string),
 			Enabled:               d.Get("enabled").(bool),
@@ -141,7 +137,15 @@ func resourceTemplatedRuleCreate(ctx context.Context, d *schema.ResourceData, m 
 			SummaryExpression:     d.Get("summary_expression").(string),
 			Tags:                  toStringSlice(d.Get("tags")),
 		},
-	})
+	}
+}
+
+func resourceTemplatedRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	c := m.(*Client)
+
+	id, err := c.Create(thresholdRulePayload(d))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -227,20 +231,7 @@ func resourceTemplatedRuleUpdate(ctx context.Context, d *schema.ResourceData, m 
 	c := m.(*Client)
 
 	if templatedRuleHasChanges(d) {
-		err := c.Update(d.Id(), TemplatedRuleRequest{
-			Fields: TemplatedRulePayload{
-				DescriptionExpression: d.Get("description_expression").(string),
-				EntitySelectors:       toEntitySelectorSlice(d.Get("entity_selectors")),
-				Expression:            d.Get("expression").(string),
-				IsPrototype:           d.Get("is_prototype").(bool),
-				Name:                  d.Get("name").(string),
-				NameExpression:        d.Get("name_expression").(string),
-				ScoreMapping:          toStructRuleScoreMapping(d.Get("severity_mapping")),
-				Stream:                "record",
-				SummaryExpression:     d.Get("summary_expression").(string),
-				Tags:                  toStringSlice(d.Get("tags")),
-			},
-		})
+		err := c.Update(d.Id(), templatedRulePayload(d))
 		if err != nil {
 			return diag.FromErr(err)
 		}

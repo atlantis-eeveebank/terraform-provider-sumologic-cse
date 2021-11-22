@@ -137,17 +137,12 @@ func thresholdRuleHasChanges(d resourceDiffer) bool {
 		d.HasChange("is_prototype")
 }
 
-func resourceThresholdRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	c := m.(*Client)
-
-	id, err := c.Create(ThresholdRuleRequest{
+func thresholdRulePayload(d *schema.ResourceData) ThresholdRuleRequest {
+	return ThresholdRuleRequest{
 		Fields: ThresholdRulePayload{
 			CountDistinct:     d.Get("count_distinct").(bool),
 			CountField:        d.Get("count_field").(string),
 			Description:       d.Get("description").(string),
-			Enabled:           d.Get("enabled").(bool),
 			EntitySelectors:   toEntitySelectorSlice(d.Get("entity_selectors")),
 			Expression:        d.Get("expression").(string),
 			GroupByFields:     toStringSlice(d.Get("group_by_fields")),
@@ -158,10 +153,17 @@ func resourceThresholdRuleCreate(ctx context.Context, d *schema.ResourceData, m 
 			Stream:            "record",
 			SummaryExpression: d.Get("summary_expression").(string),
 			Tags:              toStringSlice(d.Get("tags")),
-			Version:           0,
 			WindowSize:        d.Get("window_size").(string),
 		},
-	})
+	}
+}
+
+func resourceThresholdRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	c := m.(*Client)
+
+	id, err := c.Create(thresholdRulePayload(d))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -263,24 +265,7 @@ func resourceThresholdRuleUpdate(ctx context.Context, d *schema.ResourceData, m 
 	c := m.(*Client)
 
 	if thresholdRuleHasChanges(d) {
-		err := c.Update(d.Id(), ThresholdRuleRequest{
-			Fields: ThresholdRulePayload{
-				CountDistinct:     d.Get("count_distinct").(bool),
-				CountField:        d.Get("count_field").(string),
-				Description:       d.Get("description").(string),
-				EntitySelectors:   toEntitySelectorSlice(d.Get("entity_selectors")),
-				Expression:        d.Get("expression").(string),
-				GroupByFields:     toStringSlice(d.Get("group_by_fields")),
-				IsPrototype:       d.Get("is_prototype").(bool),
-				Limit:             d.Get("limit").(int),
-				Name:              d.Get("name").(string),
-				Score:             d.Get("severity").(int),
-				Stream:            "record",
-				SummaryExpression: d.Get("summary_expression").(string),
-				Tags:              toStringSlice(d.Get("tags")),
-				WindowSize:        d.Get("window_size").(string),
-			},
-		})
+		err := c.Update(d.Id(), thresholdRulePayload(d))
 		if err != nil {
 			return diag.FromErr(err)
 		}

@@ -63,17 +63,11 @@ func resourceCustomEntityTypeCreate(ctx context.Context, d *schema.ResourceData,
 
 	c := m.(*Client)
 
-	setFields := d.Get("fields").([]interface{})
-	fields := make([]string, len(setFields))
-	for _, field := range setFields {
-		fields = append(fields, field.(string))
-	}
-
 	id, err := c.Create(CustomEntityTypeRequest{
 		Fields: CustomEntityTypePayload{
 			Identifier: d.Get("identifier").(string),
 			Name:       d.Get("name").(string),
-			Fields:     fields,
+			Fields:     toStringSlice(d.Get("fields")),
 		},
 	})
 	if err != nil {
@@ -118,16 +112,10 @@ func resourceCustomEntityTypeUpdate(ctx context.Context, d *schema.ResourceData,
 	if d.HasChanges("name", "fields") {
 		c := m.(*Client)
 
-		setFields := d.Get("Items").([]interface{})
-		fields := make([]string, len(setFields))
-		for _, field := range setFields {
-			fields = append(fields, field.(string))
-		}
-
 		err := c.Update(d.Id(), CustomEntityTypeRequest{
 			Fields: CustomEntityTypePayload{
 				Name:   d.Get("name").(string),
-				Fields: fields,
+				Fields: toStringSlice(d.Get("fields")),
 			},
 		})
 		if err != nil {

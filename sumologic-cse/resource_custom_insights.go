@@ -102,34 +102,26 @@ func resourceCustomInsight() *schema.Resource {
 	}
 }
 
-func resourceCustomInsightCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	c := m.(*Client)
-
-	setRuleIds := d.Get("rule_ids").([]interface{})
-	ruleIds := make([]string, len(setRuleIds))
-	for _, ruleId := range setRuleIds {
-		ruleIds = append(ruleIds, ruleId.(string))
-	}
-
-	setTags := d.Get("tags").([]interface{})
-	tags := make([]string, len(setTags))
-	for _, tag := range setTags {
-		tags = append(tags, tag.(string))
-	}
-
-	id, err := c.Create(CustomInsightRequest{
+func customInsightPayload(d *schema.ResourceData) CustomInsightRequest {
+	return CustomInsightRequest{
 		Fields: CustomInsightPayload{
 			Description: d.Get("description").(string),
 			Enabled:     d.Get("enabled").(bool),
 			Name:        d.Get("name").(string),
 			Ordered:     d.Get("ordered").(bool),
-			RuleIds:     ruleIds,
+			RuleIds:     toStringSlice(d.Get("rule_ids")),
 			Severity:    d.Get("severity").(string),
-			Tags:        tags,
+			Tags:        toStringSlice(d.Get("tags")),
 		},
-	})
+	}
+}
+
+func resourceCustomInsightCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	c := m.(*Client)
+
+	id, err := c.Create(customInsightPayload(d))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -205,29 +197,7 @@ func resourceCustomInsightUpdate(ctx context.Context, d *schema.ResourceData, m 
 	if d.HasChanges("ordered", "description", "enabled", "name", "severity", "rule_ids", "tags") {
 		c := m.(*Client)
 
-		setRuleIds := d.Get("rule_ids").([]interface{})
-		ruleIds := make([]string, len(setRuleIds))
-		for _, ruleId := range setRuleIds {
-			ruleIds = append(ruleIds, ruleId.(string))
-		}
-
-		setTags := d.Get("tags").([]interface{})
-		tags := make([]string, len(setTags))
-		for _, tag := range setTags {
-			tags = append(tags, tag.(string))
-		}
-
-		err := c.Update(d.Id(), CustomInsightRequest{
-			Fields: CustomInsightPayload{
-				Description: d.Get("description").(string),
-				Enabled:     d.Get("enabled").(bool),
-				Name:        d.Get("name").(string),
-				Ordered:     d.Get("ordered").(bool),
-				RuleIds:     ruleIds,
-				Severity:    d.Get("severity").(string),
-				Tags:        tags,
-			},
-		})
+		err := c.Update(d.Id(), customInsightPayload(d))
 		if err != nil {
 			return diag.FromErr(err)
 		}

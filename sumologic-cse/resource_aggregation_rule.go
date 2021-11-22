@@ -176,12 +176,8 @@ func aggregationRuleHasChanges(d resourceDiffer) bool {
 		d.HasChange("window_size")
 }
 
-func resourceAggregationRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	c := m.(*Client)
-
-	id, err := c.Create(AggregationRuleRequest{
+func aggregationRulePayload(d *schema.ResourceData) AggregationRuleRequest {
+	return AggregationRuleRequest{
 		Fields: AggregationRulePayload{
 			AggregationFunctions:  toAggregationFunctionSlice(d.Get("aggregation_functions")),
 			DescriptionExpression: d.Get("description_expression").(string),
@@ -200,7 +196,15 @@ func resourceAggregationRuleCreate(ctx context.Context, d *schema.ResourceData, 
 			TriggerExpression:     d.Get("trigger_expression").(string),
 			WindowSize:            d.Get("window_size").(string),
 		},
-	})
+	}
+}
+
+func resourceAggregationRuleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	c := m.(*Client)
+
+	id, err := c.Create(aggregationRulePayload(d))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -315,25 +319,7 @@ func resourceAggregationRuleUpdate(ctx context.Context, d *schema.ResourceData, 
 	c := m.(*Client)
 
 	if aggregationRuleHasChanges(d) {
-		err := c.Update(d.Id(), AggregationRuleRequest{
-			Fields: AggregationRulePayload{
-				AggregationFunctions:  toAggregationFunctionSlice(d.Get("aggregation_functions")),
-				DescriptionExpression: d.Get("description_expression").(string),
-				EntitySelectors:       toEntitySelectorSlice(d.Get("entity_selectors")),
-				GroupByAsset:          d.Get("group_by_entity").(bool),
-				GroupByFields:         toStringSlice(d.Get("group_by_fields")),
-				IsPrototype:           d.Get("is_prototype").(bool),
-				MatchExpression:       d.Get("match_expression").(string),
-				Name:                  d.Get("name").(string),
-				NameExpression:        d.Get("name_expression").(string),
-				ScoreMapping:          toStructRuleScoreMapping(d.Get("severity_mapping")),
-				Stream:                "record",
-				SummaryExpression:     d.Get("summary_expression").(string),
-				Tags:                  toStringSlice(d.Get("tags")),
-				TriggerExpression:     d.Get("trigger_expression").(string),
-				WindowSize:            d.Get("window_size").(string),
-			},
-		})
+		err := c.Update(d.Id(), aggregationRulePayload(d))
 		if err != nil {
 			return diag.FromErr(err)
 		}

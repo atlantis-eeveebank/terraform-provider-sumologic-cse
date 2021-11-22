@@ -33,35 +33,35 @@ type LogMappingResponse struct {
 }
 
 type LogMapping struct {
-	Id                 string                      `json:"id"`
 	Enabled            bool                        `json:"enabled"`
+	Id                 string                      `json:"id"`
+	Fields             []LogMappingField           `json:"fields"`
 	Name               string                      `json:"name"`
 	ProductGuid        string                      `json:"productGuid"`
 	RecordType         string                      `json:"recordType"`
 	RelatesEntities    bool                        `json:"relatesEntities"`
-	Source             string                      `json:"source"`
-	UnstructuredFields string                      `json:"unstructuredFields"`
 	SkippedValues      []string                    `json:"skippedValues"`
-	Fields             []LogMappingField           `json:"fields"`
+	Source             string                      `json:"source"`
 	StructuredInputs   []LogMappingStructuredInput `json:"structuredInputs"`
+	UnstructuredFields LogMappingUnstructuredInput `json:"unstructuredFields"`
 }
 
 type LogMappingField struct {
-	AlternateValues  []string                `json:"alternateValues"`
-	CaseInsensitive  bool                    `json:"caseInsensitive"`
-	DefaultValue     string                  `json:"defaultValue"`
-	FieldJoin        string                  `json:"fieldJoin"`
-	Format           string                  `json:"format"`
-	FormatParameters string                  `json:"formatParameters"`
-	JoinDelimiter    string                  `json:"joinDelimiter"`
-	Lookup           []LogMappingFieldLookup `json:"lookup"`
+	AlternateValues  []string                `json:"alternateValues,omitempty"`
+	CaseInsensitive  bool                    `json:"caseInsensitive,omitempty"`
+	DefaultValue     string                  `json:"defaultValue,omitempty"`
+	FieldJoin        []string                `json:"fieldJoin,omitempty"`
+	Format           string                  `json:"format,omitempty"`
+	FormatParameters []string                `json:"formatParameters,omitempty"`
+	JoinDelimiter    string                  `json:"joinDelimiter,omitempty"`
+	Lookup           []LogMappingFieldLookup `json:"lookup,omitempty"`
 	Name             string                  `json:"name"`
-	SkippedValues    string                  `json:"skippedValues"`
-	SplitDelimiter   string                  `json:"splitDelimiter"`
-	SplitIndex       string                  `json:"splitIndex"`
-	TimeZone         string                  `json:"timeZone"`
-	Value            string                  `json:"value"`
-	ValueType        string                  `json:"valueType"`
+	SkippedValues    []string                `json:"skippedValues,omitempty"`
+	SplitDelimiter   string                  `json:"splitDelimiter,omitempty"`
+	SplitIndex       string                  `json:"splitIndex,omitempty"`
+	TimeZone         string                  `json:"timeZone,omitempty"`
+	Value            string                  `json:"value,omitempty"`
+	ValueType        string                  `json:"valueType,omitempty"`
 }
 
 type LogMappingFieldLookup struct {
@@ -76,22 +76,25 @@ type LogMappingStructuredInput struct {
 	Vendor         string `json:"vendor"`
 }
 
+type LogMappingUnstructuredInput struct {
+	PatternNames []string `json:"patternNames"`
+}
+
 type LogMappingRequest struct {
 	Fields PostLogMappingPayload `json:"fields"`
 }
 
 type PostLogMappingPayload struct {
-	Id                 string                      `json:"id"`
-	Enabled            bool                        `json:"enabled"`
-	Name               string                      `json:"name"`
-	ProductGuid        string                      `json:"productGuid"`
-	RecordType         string                      `json:"recordType"`
-	RelatesEntities    bool                        `json:"relatesEntities"`
-	Source             string                      `json:"source"`
-	UnstructuredFields string                      `json:"unstructuredFields"`
-	SkippedValues      []string                    `json:"skippedValues"`
 	Fields             []LogMappingField           `json:"fields"`
-	StructuredInputs   []LogMappingStructuredInput `json:"structuredInputs"`
+	Name               string                      `json:"name"`
+	Enabled            bool                        `json:"enabled,omitempty"`
+	ParentId           string                      `json:"parentId,omitempty"`
+	ProductGuid        string                      `json:"productGuid,omitempty"`
+	RecordType         string                      `json:"recordType"`
+	RelatesEntities    bool                        `json:"relatesEntities,omitempty"`
+	SkippedValues      []string                    `json:"skippedValues,omitempty"`
+	StructuredInputs   []LogMappingStructuredInput `json:"structuredInputs,omitempty"`
+	UnstructuredFields LogMappingUnstructuredInput `json:"unstructuredFields,omitempty"`
 }
 
 func resourceLogMapping() *schema.Resource {
@@ -115,6 +118,10 @@ func resourceLogMapping() *schema.Resource {
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
+			},
+			"parent_id": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
 			},
 			"product_guid": &schema.Schema{
 				Type:     schema.TypeString,
@@ -230,68 +237,17 @@ func resourceLogMappingCreate(ctx context.Context, d *schema.ResourceData, m int
 
 	c := m.(*Client)
 
-	setSkippedValues := d.Get("skipped_values").([]interface{})
-	skippedValues := make([]string, len(setSkippedValues))
-	for _, skippedValue := range setSkippedValues {
-		skippedValues = append(skippedValues, skippedValue.(string))
-	}
-
-	setFields := d.Get("fields").([]interface{})
-	fields := make([]LogMappingField, len(setFields))
-	for _, field := range setFields {
-		fieldMap := field.(map[string]interface{})
-
-		avs := fieldMap["alternate_values"].([]interface{})
-		alternateValues := make([]string, len(avs))
-		for _, av := range avs {
-			alternateValues = append(alternateValues, av.(string))
-		}
-
-		lus := fieldMap["lookup"].([]interface{})
-		lookups := make([]LogMappingFieldLookup, len(lus))
-		for _, lu := range lus {
-			lookupMap := lu.(map[string]interface{})
-			lookups = append(lookups, LogMappingFieldLookup{
-				Key:   lookupMap["key"].(string),
-				Value: lookupMap["value"].(string),
-			})
-		}
-
-		fields = append(fields, LogMappingField{
-			AlternateValues: alternateValues,
-			CaseInsensitive: fieldMap["case_insensitive"].(bool),
-			DefaultValue:    fieldMap["default_value"].(string),
-			Format:          fieldMap["format"].(string),
-			Lookup:          lookups,
-			Name:            fieldMap["name"].(string),
-			Value:           fieldMap["value"].(string),
-			ValueType:       fieldMap["value_type"].(string),
-		})
-	}
-
-	setStructuredInputs := d.Get("StructuredInputs").([]interface{})
-	structuredInputs := make([]LogMappingStructuredInput, len(setStructuredInputs))
-	for _, structuredInput := range setStructuredInputs {
-		structuredInputMap := structuredInput.(map[string]interface{})
-
-		structuredInputs = append(structuredInputs, LogMappingStructuredInput{
-			EventIdPattern: structuredInputMap["event_id_pattern"].(string),
-			LogFormat:      structuredInputMap["log_format"].(string),
-			Product:        structuredInputMap["product"].(string),
-			Vendor:         structuredInputMap["vendor"].(string),
-		})
-	}
-
 	id, err := c.Create(LogMappingRequest{
 		Fields: PostLogMappingPayload{
 			Enabled:          d.Get("enabled").(bool),
+			Fields:           expandLogMappingField(d),
 			Name:             d.Get("name").(string),
+			ParentId:         d.Get("parent_id").(string),
 			ProductGuid:      d.Get("product_guid").(string),
 			RecordType:       d.Get("record_type").(string),
 			RelatesEntities:  d.Get("relates_entities").(bool),
-			SkippedValues:    skippedValues,
-			StructuredInputs: d.Get("structured_input").([]LogMappingStructuredInput),
-			Fields:           fields,
+			SkippedValues:    toStringSlice(d.Get("skipped_values")),
+			StructuredInputs: expandStructuredInputs(d),
 		},
 	})
 	if err != nil {
@@ -372,13 +328,14 @@ func resourceLogMappingUpdate(ctx context.Context, d *schema.ResourceData, m int
 		err := c.Update(d.Id(), LogMappingRequest{
 			Fields: PostLogMappingPayload{
 				Enabled:          d.Get("enabled").(bool),
+				Fields:           expandLogMappingField(d),
 				Name:             d.Get("name").(string),
+				ParentId:         d.Get("parent_id").(string),
 				ProductGuid:      d.Get("product_guid").(string),
 				RecordType:       d.Get("record_type").(string),
 				RelatesEntities:  d.Get("relates_entities").(bool),
-				SkippedValues:    d.Get("skipped_values").([]string),
-				StructuredInputs: d.Get("structured_input").([]LogMappingStructuredInput),
-				Fields:           d.Get("fields").([]LogMappingField),
+				SkippedValues:    toStringSlice(d.Get("skipped_values")),
+				StructuredInputs: expandStructuredInputs(d),
 			},
 		})
 		if err != nil {
@@ -402,4 +359,54 @@ func resourceLogMappingDelete(ctx context.Context, d *schema.ResourceData, m int
 	d.SetId("")
 
 	return diags
+}
+
+func expandLogMappingField(d *schema.ResourceData) []LogMappingField {
+	f := d.Get("fields").([]interface{})
+	var fields []LogMappingField
+
+	for _, field := range f {
+		fieldMap := field.(map[string]interface{})
+
+		lus := fieldMap["lookup"].([]interface{})
+		var lookups []LogMappingFieldLookup
+		for _, lu := range lus {
+			lookupMap := lu.(map[string]interface{})
+			lookups = append(lookups, LogMappingFieldLookup{
+				Key:   lookupMap["key"].(string),
+				Value: lookupMap["value"].(string),
+			})
+		}
+
+		fields = append(fields, LogMappingField{
+			AlternateValues: toStringSlice(fieldMap["alternate_values"]),
+			CaseInsensitive: fieldMap["case_insensitive"].(bool),
+			DefaultValue:    fieldMap["default_value"].(string),
+			Format:          fieldMap["format"].(string),
+			Lookup:          lookups,
+			Name:            fieldMap["name"].(string),
+			Value:           fieldMap["value"].(string),
+			ValueType:       fieldMap["value_type"].(string),
+		})
+	}
+
+	return fields
+}
+
+func expandStructuredInputs(d *schema.ResourceData) []LogMappingStructuredInput {
+	si := d.Get("structured_input").([]interface{})
+	var structuredInputs []LogMappingStructuredInput
+
+	for _, structuredInput := range si {
+		structuredInputMap := structuredInput.(map[string]interface{})
+
+		structuredInputs = append(structuredInputs, LogMappingStructuredInput{
+			EventIdPattern: structuredInputMap["event_id_pattern"].(string),
+			LogFormat:      structuredInputMap["log_format"].(string),
+			Product:        structuredInputMap["product"].(string),
+			Vendor:         structuredInputMap["vendor"].(string),
+		})
+	}
+
+	return structuredInputs
 }

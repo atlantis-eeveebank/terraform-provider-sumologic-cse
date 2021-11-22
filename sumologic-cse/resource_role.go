@@ -52,22 +52,26 @@ func resourceRole() *schema.Resource {
 	}
 }
 
+func rolePayload(d *schema.ResourceData, permissions []string) RoleRequest {
+	return RoleRequest{
+		Fields: RolePayload{
+			Name:        d.Get("name").(string),
+			Permissions: permissions,
+		},
+	}
+}
+
 func resourceRoleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	c := m.(*Client)
 
-	permissions, err := c.translateToPermissionIds(d.Get("permissions").([]interface{}))
+	permissions, err := c.getPermissionIds(d.Get("permissions").([]interface{}))
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	id, err := c.Create(RoleRequest{
-		Fields: RolePayload{
-			Name:        d.Get("name").(string),
-			Permissions: permissions,
-		},
-	})
+	id, err := c.Create(rolePayload(d, permissions))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -88,7 +92,7 @@ func resourceRoleRead(ctx context.Context, d *schema.ResourceData, m interface{}
 		return diag.FromErr(err)
 	}
 
-	permissions := make([]string, 0, len(role.(RoleResponse).Role.Permissions))
+	var permissions []string
 	for _, p := range role.(RoleResponse).Role.Permissions {
 		permissions = append(permissions, p.Name)
 	}
@@ -110,17 +114,12 @@ func resourceRoleUpdate(ctx context.Context, d *schema.ResourceData, m interface
 	if d.HasChanges("name", "permissions") {
 		c := m.(*Client)
 
-		permissions, err := c.translateToPermissionIds(d.Get("permissions").([]interface{}))
+		permissions, err := c.getPermissionIds(d.Get("permissions").([]interface{}))
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		err = c.Update(d.Id(), RoleRequest{
-			Fields: RolePayload{
-				Name:        d.Get("name").(string),
-				Permissions: permissions,
-			},
-		})
+		err = c.Update(d.Id(), rolePayload(d, permissions))
 		if err != nil {
 			return diag.FromErr(err)
 		}

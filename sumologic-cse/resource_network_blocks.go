@@ -62,19 +62,23 @@ func resourceNetworkBlock() *schema.Resource {
 	}
 }
 
-func resourceNetworkBlockCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-	var diags diag.Diagnostics
-
-	c := m.(*Client)
-
-	id, err := c.Create(NetworkBlockRequest{
+func networkBlockPayload(d *schema.ResourceData) NetworkBlockRequest {
+	return NetworkBlockRequest{
 		Fields: PostNetworkBlockPayload{
 			AddressBlock:      d.Get("address_block").(string),
 			Internal:          d.Get("internal").(bool),
 			Label:             d.Get("label").(string),
 			SuppressesSignals: d.Get("suppresses_signals").(bool),
 		},
-	})
+	}
+}
+
+func resourceNetworkBlockCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+
+	c := m.(*Client)
+
+	id, err := c.Create(networkBlockPayload(d))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -117,14 +121,7 @@ func resourceNetworkBlockUpdate(ctx context.Context, d *schema.ResourceData, m i
 	if d.HasChanges("address_block", "internal", "label", "suppresses_signals") {
 		c := m.(*Client)
 
-		err := c.Update(d.Id(), NetworkBlockRequest{
-			Fields: PostNetworkBlockPayload{
-				AddressBlock:      d.Get("address_block").(string),
-				Internal:          d.Get("internal").(bool),
-				Label:             d.Get("label").(string),
-				SuppressesSignals: d.Get("suppresses_signals").(bool),
-			},
-		})
+		err := c.Update(d.Id(), networkBlockPayload(d))
 		if err != nil {
 			return diag.FromErr(err)
 		}

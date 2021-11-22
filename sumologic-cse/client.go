@@ -54,8 +54,8 @@ func NewClient(host, apiKey *string) (*Client, error) {
 // Helper Functions
 // ----------------------------------------------------------------------------
 
-func (c *Client) translateToPermissionIds(pemissionNames []interface{}) ([]string, error) {
-	pl := make([]string, 0, len(pemissionNames))
+func (c *Client) getPermissionIds(pemissionNames []interface{}) ([]string, error) {
+	var pl []string
 
 	permissions, err := c.ReadAll("permissions")
 	if err != nil {
