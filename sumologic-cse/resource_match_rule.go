@@ -145,7 +145,7 @@ func resourceTemplatedRuleCreate(ctx context.Context, d *schema.ResourceData, m 
 
 	c := m.(*Client)
 
-	id, err := c.Create(thresholdRulePayload(d))
+	id, err := c.Create(templatedRulePayload(d))
 	if err != nil {
 		return diag.FromErr(err)
 	}
